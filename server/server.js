@@ -1,13 +1,16 @@
 var express = require("express");
+var bodyParser = require("body-parser");
 var cookieParser = require("cookie-parser");
 
 module.exports = function(port, db, githubAuthoriser) {
     var app = express();
 
     app.use(express.static("public"));
+    app.use(bodyParser.json());
     app.use(cookieParser());
 
     var users = db.collection("users");
+    var conversations = db.collection("conversations");
     var sessions = {};
 
     app.get("/oauth", function(req, res) {
@@ -85,6 +88,73 @@ module.exports = function(port, db, githubAuthoriser) {
             }
         });
     });
+
+    app.get("/api/conversations/:id", function(req, res) {
+        var userId = req.params.id;
+        console.log(req.params);
+        conversations.find().toArray(function(err, docs) {
+            if (!err) {
+                console.log("Docs ID:");
+                console.log(docs);
+                console.log("Docs Done!");
+                //res.json(docs.map(function(conversation) {
+                res.json(docs.filter(function(conversation) {
+                    console.log("Comparing: " + conversation.to + " and " + conversation.from +  " to: " + userId);
+                    if ((conversation.to === userId && conversation.from === req.session.user) || (conversation.to === req.session.user && conversation.from === userId)) {
+                        console.log(conversation);
+                        return conversation; //{
+
+                            //sent: conversation.sent,
+                            //body: conversation.body,
+                            //seen: conversation.seen,
+                            //from: conversation.from
+                        //}
+                    }
+                }))
+            } else {
+                res.sendStatus(500);
+            }
+        })
+    });
+
+    app.get("/api/conversations", function(req, res) {
+        conversations.find().toArray(function(err, docs) {
+            if (!err) {
+                console.log("Docs ALL:");
+                console.log(docs);
+                console.log("Docs Done!");
+                res.json(docs.map(function(conversation) {
+                    console.log(conversation);
+                    return {
+                        to: conversation.userName,
+                        lastMessage: conversation.lastMessage,
+                        anyUnseen: conversation.anyUnseen
+                    }
+                }));
+            } else {
+                res.sendStatus(500);
+            }
+        })
+    });
+
+    app.put("/api/conversations/:id", function(req, res) {
+
+    });
+
+    app.post("/api/conversations/:id", function(req, res) {
+        var conversationId = req.params.id;
+        console.log(conversationId + " " + Math.floor(Date.now()) + " " + req.body.body + " " + req.session.user);
+        conversations.insert({
+            to: conversationId,
+            sent: req.body.sent,
+            body: req.body.body,
+            from: req.session.user,
+            anyUnseen: true,
+            seen: false
+        });
+        res.sendStatus(201);
+    });
+
 
     return app.listen(port);
 };

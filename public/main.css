@@ -1,0 +1,9 @@
+.user-icon {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+}
+
+.user-name {
+    margin-left: 25px;
+}

@@ -3,19 +3,41 @@
     <head>
         <meta charset="utf-8">
         <title>Chat</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+        <link href="main.css" rel="stylesheet" type="text/css">
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.1/angular.min.js"></script>
         <script src="js/main.js"></script>
     </head>
-    <body ng-controller="ChatController">
+    <body ng-controller="ChatController as main">
         <a ng-show="!loggedIn" href="{{loginUri}}">Log in</a>
-        <section ng-show="loggedIn">
+        <section ng-show="loggedIn" class="col-sm-3">
             <p>Logged in as {{user.name}}.</p>
             <h2>List of registered users</h2>
-            <ul>
-                <li ng-repeat="user in users">
-                    {{user.name}}
+            <ul class="list-group">
+                <li class="list-group-item" ng-repeat="user in users">
+                    <img src="{{user.avatarUrl}}" class="user-icon"/>
+                    <span class="user-name" ng-click="main.displayMessages(user)">{{user.name}}</span>
+                    <span ng-show="{{!user.name}}" ng-click="main.displayMessages(user)">{{user.id}}</span>
                 </li>
             </ul>
         </section>
+        <div ng-if="main.isSendingMessage" class="col-sm-9 message-details">
+            <h4>Send a message to {{main.sendingMessage.name}}</h4>
+            <hr/>
+            <table class="list-group">
+                <tr class="list-group-item" ng-repeat="message in conversations">
+                    <td>{{message.sent | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+                    <td>{{message.body}}</td>
+                </tr>
+            </table>
+            <form name="main.sendForm" role="form" id="send-form"
+                  ng-submit="main.sendMessage(main.sendingMessage, main.newMessage, main.sendForm.$valid)">
+                <input type="text" class="form-control" id="new-message" ng-model="main.newMessage.body" required="true">
+                <button type="submit" class="form-control" id="submit-message">Create</button>
+            </form>
+        </div>
+        <div class="alert alert-danger" role="alert" ng-if="main.error">
+            <span id="error">{{main.error}}</span>
+        </div>
     </body>
 </html>
