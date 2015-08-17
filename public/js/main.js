@@ -51,7 +51,7 @@
                     $scope.loginUri = result.data.uri;
                 });
             });
-        }
+        };
 
         self.setSentMessage = function (user) {
             console.log("Sending message to " + user.id);
@@ -70,22 +70,23 @@
                         self.resetForm();
                     })
                     .catch(function(error) {
-                        self.error = "Failed to create message. Server returned " + error.status + " - " + error.statusText;
+                        self.error = "Failed to create message. Server returned " +
+                            error.status + " - " + error.statusText;
                     });
             }
-        }
-    });
-    app.filter('orderObjectBy', function() {
-        return function(items, field, reverse) {
-            var filtered = [];
-            angular.forEach(items, function(item) {
-                filtered.push(item);
-            });
-            filtered.sort(function (a, b) {
-                return (a[field] > b[field] ? 1 : -1);
-            });
-            if(reverse) filtered.reverse();
-            return filtered;
         };
     });
+    //app.filter("orderObjectBy", function() {
+    //    return function(items, field, reverse) {
+    //        var filtered = [];
+    //        angular.forEach(items, function(item) {
+    //            filtered.push(item);
+    //        });
+    //        filtered.sort(function (a, b) {
+    //            return (a[field] > b[field] ? 1 : -1);
+    //        });
+    //        if(reverse) filtered.reverse();
+    //        return filtered;
+    //    };
+    //});
 })();

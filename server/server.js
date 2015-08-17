@@ -99,22 +99,23 @@ module.exports = function(port, db, githubAuthoriser) {
                 console.log("Docs Done!");
                 //res.json(docs.map(function(conversation) {
                 res.json(docs.filter(function(conversation) {
-                    console.log("Comparing: " + conversation.to + " and " + conversation.from +  " to: " + userId);
-                    if ((conversation.to === userId && conversation.from === req.session.user) || (conversation.to === req.session.user && conversation.from === userId)) {
+                    console.log("Comparing: " + conversation.to + " and " +
+                        conversation.from +  " to: " + userId);
+                    if ((conversation.to === userId && conversation.from === req.session.user) ||
+                        (conversation.to === req.session.user && conversation.from === userId)) {
                         console.log(conversation);
                         return conversation; //{
-
-                            //sent: conversation.sent,
-                            //body: conversation.body,
-                            //seen: conversation.seen,
-                            //from: conversation.from
+                        //sent: conversation.sent,
+                        //body: conversation.body,
+                        //seen: conversation.seen,
+                        //from: conversation.from
                         //}
                     }
-                }))
+                }));
             } else {
                 res.sendStatus(500);
             }
-        })
+        });
     });
 
     app.get("/api/conversations", function(req, res) {
@@ -129,12 +130,12 @@ module.exports = function(port, db, githubAuthoriser) {
                         to: conversation.userName,
                         lastMessage: conversation.lastMessage,
                         anyUnseen: conversation.anyUnseen
-                    }
+                    };
                 }));
             } else {
                 res.sendStatus(500);
             }
-        })
+        });
     });
 
     app.put("/api/conversations/:id", function(req, res) {
@@ -154,7 +155,6 @@ module.exports = function(port, db, githubAuthoriser) {
         });
         res.sendStatus(201);
     });
-
 
     return app.listen(port);
 };
