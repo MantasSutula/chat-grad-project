@@ -21,13 +21,21 @@
                 </li>
             </ul>
         </section>
-        <div ng-if="main.isSendingMessage" class="col-sm-9 message-details">
+        <div ng-if="main.isSendingMessage" class="table-responsive col-sm-9 message-details">
             <h4>Send a message to {{main.sendingMessage.name}}</h4>
             <hr/>
-            <table class="list-group">
-                <tr class="list-group-item" ng-repeat="message in conversations">
-                    <td>{{message.sent | date:'yyyy-MM-dd HH:mm:ss'}}</td>
-                    <td>{{message.body}}</td>
+            <table class="table table-bordered table-hover">
+                <tr class="info" ng-if="main.sendingMessage.id === message.from" ng-repeat="message in conversations">
+                    <td ng-show="{{message.sent}}" class="message-date">{{message.sent | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+                    <td class="message-sender" ng-if="main.sendingMessage.id === message.from">{{main.sendingMessage.name}}</td>
+                    <td class="message-receiver" ng-if="main.sendingMessage.id !== message.from">{{message.from}}</td>
+                    <td class="message-text">{{message.body}}</td>
+                </tr>
+                <tr class="success" ng-if="main.sendingMessage.id !== message.from" ng-repeat="message in conversations">
+                    <td ng-show="{{message.sent}}" class="message-date">{{message.sent | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+                    <td class="message-sender" ng-if="main.sendingMessage.id === message.from">{{main.sendingMessage.name}}</td>
+                    <td class="message-receiver" ng-if="main.sendingMessage.id !== message.from">{{message.from}}</td>
+                    <td class="message-text">{{message.body}}</td>
                 </tr>
             </table>
             <form name="main.sendForm" role="form" id="send-form"

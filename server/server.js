@@ -94,9 +94,9 @@ module.exports = function(port, db, githubAuthoriser) {
         console.log(req.params);
         conversations.find().toArray(function(err, docs) {
             if (!err) {
-                console.log("Docs ID:");
+                docs = docs.sort({sent: -1});
+                console.log("After sort");
                 console.log(docs);
-                console.log("Docs Done!");
                 //res.json(docs.map(function(conversation) {
                 res.json(docs.filter(function(conversation) {
                     console.log("Comparing: " + conversation.to + " and " +
@@ -127,7 +127,7 @@ module.exports = function(port, db, githubAuthoriser) {
                 res.json(docs.map(function(conversation) {
                     console.log(conversation);
                     return {
-                        to: conversation.userName,
+                        user: conversation.userName,
                         lastMessage: conversation.lastMessage,
                         anyUnseen: conversation.anyUnseen
                     };
@@ -144,7 +144,7 @@ module.exports = function(port, db, githubAuthoriser) {
 
     app.post("/api/conversations/:id", function(req, res) {
         var conversationId = req.params.id;
-        console.log(conversationId + " " + Math.floor(Date.now()) + " " + req.body.body + " " + req.session.user);
+        console.log(conversationId + " " + req.body.sent + " " + req.body.body + " " + req.session.user);
         conversations.insert({
             to: conversationId,
             sent: req.body.sent,

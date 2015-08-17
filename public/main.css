@@ -7,3 +7,19 @@
 .user-name {
     margin-left: 25px;
 }
+
+.message-sender {
+    width: 120px;
+}
+
+.message-receiver {
+    width: 120px;
+}
+
+.message-text-sender {
+    background-color: #dff0d8;
+}
+
+.message-date {
+    width: 100px;
+}
