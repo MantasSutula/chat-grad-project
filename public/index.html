@@ -28,10 +28,25 @@
                     </span>
                 </li>
             </ul>
+            <div class="conversations">
+                <h2>List of conversations</h2>
+                <ul class="list-group">
+                    <li class="list-group-item" ng-repeat="item in userConversations">
+                        <span ng-repeat="user in users">
+                            <span ng-show="user.id === item.user" ng-click="main.displayMessages(user)">{{user.name}}</span>
+                        </span>
+                    </li>
+                </ul>
+            </div>
         </section>
         <div ng-if="main.isSendingMessage" class="table-responsive col-sm-9">
             <h4>Send a message to {{main.sendingMessage.name}}</h4>
             <hr/>
+            <form name="main.sendForm" role="form" id="send-form"
+                  ng-submit="main.sendMessage(main.sendingMessage, main.newMessage, main.sendForm.$valid)">
+                <input type="text" class="form-control" id="new-message" ng-model="main.newMessage.body" required="true">
+                <button type="submit" class="form-control" id="submit-message">Send</button>
+            </form>
             <div class="message-table">
             <table class="table table-bordered table-hover">
                 <tr ng-repeat="message in conversations">
@@ -44,11 +59,6 @@
                 </tr>
             </table>
             </div>
-            <form name="main.sendForm" role="form" id="send-form"
-                  ng-submit="main.sendMessage(main.sendingMessage, main.newMessage, main.sendForm.$valid)">
-                <input type="text" class="form-control" id="new-message" ng-model="main.newMessage.body" required="true">
-                <button type="submit" class="form-control" id="submit-message">Create</button>
-            </form>
         </div>
         <div class="alert alert-danger" role="alert" ng-if="main.error">
             <span id="error">{{main.error}}</span>

@@ -4,7 +4,8 @@
     app.controller("ChatController", function($scope, $http, $interval) {
         var self = this;
         $scope.loggedIn = false;
-        $interval(reloadData, 1000);
+        $scope.activeChatUser = "";
+        $interval(reloadData, 2000);
 
         self.resetForm = function() {
             self.loading = false;
@@ -30,6 +31,7 @@
         }
 
         function reloadData() {
+            console.log($scope.activeChatUser);
             $http.get("/api/user").then(function(userResult) {
                 $scope.loggedIn = true;
                 $scope.user = userResult.data;
@@ -41,6 +43,10 @@
                         }
                     });
                     displayConversations();
+                    if($scope.activeChatUser !== null && $scope.activeChatUser !== undefined) {
+                        console.log("Updating the display message " + $scope.activeChatUser);
+                        self.displayMessages($scope.activeChatUser);
+                    }
                 });
             }, function() {
                 $http.get("/api/oauth/uri").then(function(result) {
@@ -77,6 +83,8 @@
 
         self.displayMessages = function(user) {
             console.log("Sending message to " + user.id);
+            $scope.activeChatUser = user;
+            console.log("Active Chat User " + $scope.activeChatUser);
             var messageTo = user.id;
             var placeholderMessage = {
                     seen: true

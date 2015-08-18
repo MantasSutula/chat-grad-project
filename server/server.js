@@ -176,7 +176,7 @@ module.exports = function(port, db, githubAuthoriser) {
                 }
                 //FOR LOOP
                 docs.splice(0, arrayOfObjects[0].index);
-                docs.splice(1, docs.length-1);
+                docs.splice(1, docs.length);
                 console.log("After sort and remove duplicates");
                 console.log(docs);
                 res.json(docs.map(function(conversation) {
@@ -228,6 +228,8 @@ module.exports = function(port, db, githubAuthoriser) {
         });
         res.sendStatus(201);
     });
+
+    
 
     return app.listen(port);
 };
