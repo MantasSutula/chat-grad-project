@@ -25,17 +25,13 @@
             <h4>Send a message to {{main.sendingMessage.name}}</h4>
             <hr/>
             <table class="table table-bordered table-hover">
-                <tr class="info" ng-if="main.sendingMessage.id === message.from" ng-repeat="message in conversations">
-                    <td ng-show="{{message.sent}}" class="message-date">{{message.sent | date:'yyyy-MM-dd HH:mm:ss'}}</td>
-                    <td class="message-sender" ng-if="main.sendingMessage.id === message.from">{{main.sendingMessage.name}}</td>
-                    <td class="message-receiver" ng-if="main.sendingMessage.id !== message.from">{{message.from}}</td>
-                    <td class="message-text">{{message.body}}</td>
-                </tr>
-                <tr class="success" ng-if="main.sendingMessage.id !== message.from" ng-repeat="message in conversations">
-                    <td ng-show="{{message.sent}}" class="message-date">{{message.sent | date:'yyyy-MM-dd HH:mm:ss'}}</td>
-                    <td class="message-sender" ng-if="main.sendingMessage.id === message.from">{{main.sendingMessage.name}}</td>
-                    <td class="message-receiver" ng-if="main.sendingMessage.id !== message.from">{{message.from}}</td>
-                    <td class="message-text">{{message.body}}</td>
+                <tr ng-repeat="message in conversations">
+                    <td ng-if="{{message.seen === true}}"  class="message-date-seen">{{message.sent | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+                    <td ng-if="{{message.seen === false}}" class="message-date-unseen">{{message.sent | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+                    <td class="message-receiver" ng-if="main.sendingMessage.id === message.from">{{main.sendingMessage.name}}</td>
+                    <td class="message-sender" ng-if="main.sendingMessage.id !== message.from">{{message.from}}</td>
+                    <td ng-if="main.sendingMessage.id !== message.from" class="message-text-sender">{{message.body}}</td>
+                    <td ng-if="main.sendingMessage.id === message.from" class="message-text-receiver">{{message.body}}</td>
                 </tr>
             </table>
             <form name="main.sendForm" role="form" id="send-form"

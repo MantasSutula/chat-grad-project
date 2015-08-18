@@ -94,23 +94,34 @@ module.exports = function(port, db, githubAuthoriser) {
         console.log(req.params);
         conversations.find().toArray(function(err, docs) {
             if (!err) {
-                docs = docs.sort({sent: -1});
+                docs = docs.filter(function(conversation) {
+                    if ((conversation.to === userId && conversation.from === req.session.user) ||
+                        (conversation.to === req.session.user && conversation.from === userId) && conversation.sent) {
+                        //console.log(conversation);
+                        return conversation;
+                    }
+                });
+                console.log("After filter");
+                console.log(docs);
+                docs = docs.sort(function(a, b){return b.sent - a.sent});
                 console.log("After sort");
                 console.log(docs);
+                //res.json(docs);
                 //res.json(docs.map(function(conversation) {
-                res.json(docs.filter(function(conversation) {
+                res.json(docs.map(function(conversation) {
                     console.log("Comparing: " + conversation.to + " and " +
                         conversation.from +  " to: " + userId);
-                    if ((conversation.to === userId && conversation.from === req.session.user) ||
-                        (conversation.to === req.session.user && conversation.from === userId)) {
+                    //if ((conversation.to === userId && conversation.from === req.session.user) ||
+                    //    (conversation.to === req.session.user && conversation.from === userId)) {
                         console.log(conversation);
-                        return conversation; //{
-                        //sent: conversation.sent,
-                        //body: conversation.body,
-                        //seen: conversation.seen,
-                        //from: conversation.from
-                        //}
-                    }
+                        //return conversation;
+                    return {
+                        sent: conversation.sent,
+                        body: conversation.body,
+                        seen: conversation.seen,
+                        from: conversation.from
+                    };
+                    //}
                 }));
             } else {
                 res.sendStatus(500);

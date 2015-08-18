@@ -10,16 +10,26 @@
 
 .message-sender {
     width: 120px;
-}
-
-.message-receiver {
-    width: 120px;
+    background-color: #dff0d8;
 }
 
 .message-text-sender {
     background-color: #dff0d8;
 }
 
-.message-date {
+.message-receiver {
+    width: 120px;
+    background-color: #d9edf7;
+}
+
+.message-text-receiver {
+    background-color: #d9edf7;
+}
+
+.message-date-seen {
+    width: 100px;
+}
+
+.message-date-unseen {
     width: 100px;
 }
