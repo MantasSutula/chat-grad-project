@@ -1,3 +1,20 @@
+.title {
+    padding-top: 20px;
+    padding-bottom: 10px;
+    padding-left: 5%;
+    background-color: #5C5054;
+}
+
+.title-text {
+    margin-top: 0px;
+    color: aliceblue;
+}
+
+.user-icon-title {
+    width: 20px;
+    height: 20px;
+}
+
 .user-icon {
     position: absolute;
     width: 20px;
@@ -40,4 +57,12 @@
     width: 100px;
     background-color: #fcf8e3
     /*background-color: #f2dede;*/
+}
+
+.new-message {
+    float: right;
+}
+
+.new-message-background {
+    background-color: #dff0d8;
 }

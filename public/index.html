@@ -9,19 +9,26 @@
         <script src="js/main.js"></script>
     </head>
     <body ng-controller="ChatController as main">
+        <div class="title">
+            <h1 class="title-text">Welcome, {{user.name}}!</h1>
+        </div>
         <a ng-show="!loggedIn" href="{{loginUri}}">Log in</a>
         <section ng-show="loggedIn" class="col-sm-3">
-            <p>Logged in as {{user.name}}.</p>
-            <h2>List of registered users</h2>
+            <h2>List of users</h2>
+            <div>
+                <input type="text" ng-model="searchString" placeholder="Enter username" />
+            </div>
             <ul class="list-group">
-                <li class="list-group-item" ng-repeat="item in users">
-                    <img src="{{item.avatarUrl}}" class="user-icon"/>
-                    <span class="user-name" ng-click="main.displayMessages(item)">{{item.name}}</span>
-                    <span ng-show="{{!item.name}}" ng-click="main.displayMessages(item)">{{item.id}}</span>
+                <li class="list-group-item" ng-repeat="item in users | searchFor:searchString">
+                    <span ng-repeat="conversation in userConversations" ng-click="main.displayMessages(item)">
+                        <img src="{{item.avatarUrl}}" class="user-icon"/>
+                        <span class="user-name">{{item.name}}</span>
+                        <span ng-show="{{!item.name}}">{{item.id}}</span>
+                        <span class="glyphicon glyphicon-inbox new-message" ng-if="conversation.user === item.id && conversation.anyUnseen"></span>
+                    </span>
                 </li>
             </ul>
         </section>
-        <button type="button" ng-click="main.displayConversations()">Display Conversations</button>
         <div ng-if="main.isSendingMessage" class="table-responsive col-sm-9">
             <h4>Send a message to {{main.sendingMessage.name}}</h4>
             <hr/>

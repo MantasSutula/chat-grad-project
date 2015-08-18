@@ -1,9 +1,10 @@
 (function() {
     var app = angular.module("ChatApp", []);
 
-    app.controller("ChatController", function($scope, $http) {
+    app.controller("ChatController", function($scope, $http, $interval) {
         var self = this;
         $scope.loggedIn = false;
+        $interval(reloadData, 1000);
 
         self.resetForm = function() {
             self.loading = false;
@@ -20,6 +21,34 @@
             return result.data;
         }
 
+        function displayConversations() {
+            //console.log("Starting display conversations method for " + $scope.user._id);
+            $http.get("/api/conversations").then(function(result) {
+                console.log(result);
+                $scope.userConversations = result.data;
+            });
+        }
+
+        function reloadData() {
+            $http.get("/api/user").then(function(userResult) {
+                $scope.loggedIn = true;
+                $scope.user = userResult.data;
+                $http.get("/api/users").then(function(result) {
+                    $scope.users = result.data;
+                    $scope.users = $scope.users.filter(function(item) {
+                        if ($scope.user._id !== item.id) {
+                            return item;
+                        }
+                    });
+                    displayConversations();
+                });
+            }, function() {
+                $http.get("/api/oauth/uri").then(function(result) {
+                    $scope.loginUri = result.data.uri;
+                });
+            });
+        }
+
         $http.get("/api/user").then(function(userResult) {
             $scope.loggedIn = true;
             $scope.user = userResult.data;
@@ -30,6 +59,7 @@
                         return item;
                     }
                 });
+                displayConversations();
             });
         }, function() {
             $http.get("/api/oauth/uri").then(function(result) {
@@ -37,12 +67,13 @@
             });
         });
 
-        self.displayConversations = function() {
-            console.log("Starting display conversations method for " + $scope.user._id);
-            $http.get("/api/conversations").then(function(conversations) {
-                console.log(conversations);
-            });
-        };
+        //self.displayConversations = function() {
+        //    console.log("Starting display conversations method for " + $scope.user._id);
+        //    $http.get("/api/conversations").then(function(result) {
+        //        console.log(result);
+        //        $scope.userConversations = result.data;
+        //    });
+        //};
 
         self.displayMessages = function(user) {
             console.log("Sending message to " + user.id);
@@ -53,9 +84,7 @@
             self.sendingMessage = angular.copy(user);
             self.isSendingMessage = true;
             $http.get("/api/user").then(function(userResult) {
-                $scope.loggedIn = true;
-                $scope.user = userResult.data;
-                console.log($scope.user.data._id);
+                console.log($scope.user._id);
                 console.log("Entering put field with " + placeholderMessage.seen);
                 $http.put("/api/conversations/" + messageTo, placeholderMessage).then(function(result) {
                     console.log("result of update");
@@ -97,17 +126,23 @@
             }
         };
     });
-    //app.filter("orderObjectBy", function() {
-    //    return function(items, field, reverse) {
-    //        var filtered = [];
-    //        angular.forEach(items, function(item) {
-    //            filtered.push(item);
-    //        });
-    //        filtered.sort(function (a, b) {
-    //            return (a[field] > b[field] ? 1 : -1);
-    //        });
-    //        if(reverse) filtered.reverse();
-    //        return filtered;
-    //    };
-    //});
+    app.filter("searchFor", function() {
+        return function(arr, searchString) {
+            if (!searchString) {
+                return arr;
+            }
+
+            var result = [];
+
+            searchString = searchString.toLowerCase();
+
+            angular.forEach(arr, function(item) {
+                //console.log(item); NEED TO CHANGE TO NAME, NOT ID.lowercase
+                if (item.id.toLowerCase().indexOf(searchString) !== -1) {
+                    result.push(item);
+                }
+            });
+            return result;
+        };
+    });
 })();

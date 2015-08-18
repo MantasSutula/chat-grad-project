@@ -129,19 +129,61 @@ module.exports = function(port, db, githubAuthoriser) {
         conversations.find().toArray(function(err, docs) {
             if (!err) {
                 docs = docs.filter(function(conversation) {
-                    if (((conversation.from === req.session.user && conversation.to) ||
-                        conversation.to === req.session.user) && conversation.sent) {
+                    //if (((conversation.from === req.session.user && conversation.to) ||
+                    if ((conversation.to === req.session.user) &&
+                        (conversation.to !== conversation.from) && conversation.sent) {
                         //console.log(conversation);
                         return conversation;
                     }
                 });
+                docs = docs.sort(function(a, b) {
+                    var temp = b.from - a.from;
+                    return temp == 1? b.sent - a.sent : temp;
+                });
+                // Remove duplicate elements, and only leave the newest date one
+                var arrayOfObjects = [];
+                for (var j = 0; j < docs.length - 1; j++) {
+                    var smallObject = docs[j];
+                    for (var i = j + 1; i <= docs.length - 1; i++) {
+                        if (smallObject.from === docs[i].from) {
+                            if (smallObject.sent < docs[i].sent) {
+                                smallObject = docs[i];
+                                smallObject.index = i;
+                            }
+                        }
+                        else {
+                            break;
+                        }
+                            //console.log(docs[j]);
+                            //console.log("comparing to");
+                            //console.log(docs[i]);
+                            //if (docs[j].sent > docs[i].sent) {
+                            //    console.log("TRUECompared: " + docs[i].from + " to: " + docs[i + 1].from + "  With timestamp: " + docs[i].sent + " to: " + docs[i + 1].sent + " REMOVING " + docs[i + 1].sent);
+                            //    //console.log(docs.splice(i, 1));
+                            //    console.log(docs.length);
+                            //    docs.splice(i, 1);
+                            //    console.log(docs.length);
+                            //    i = i--;
+                            //}
+                            //else {
+                            //    console.log("FALSECompared: " + docs[i].from + " to: " + docs[i + 1].from + "  With timestamp: " + docs[i].sent + " to: " + docs[i + 1].sent + " REMOVING " + docs[i].sent);
+                            //    //console.log(docs.splice(i, 1));
+                            //    docs.splice(j, 1);
+                            //}
+                        j = smallObject.index;
+                    }
+                    arrayOfObjects.push(smallObject);
+                }
+                //FOR LOOP
+                docs.splice(0, arrayOfObjects[0].index);
+                docs.splice(1, docs.length-1);
+                console.log("After sort and remove duplicates");
+                console.log(docs);
                 res.json(docs.map(function(conversation) {
-                    console.log(conversation);
                     return {
-                        to: conversation.to,
-                        from: conversation.from,
+                        user: conversation.from,
                         lastMessage: conversation.sent,
-                        anyUnseen: conversation.anyUnseen
+                        anyUnseen: !conversation.seen
                     };
                 }));
             } else {
