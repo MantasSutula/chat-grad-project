@@ -26,7 +26,7 @@
             $http.get("/api/users").then(function(result) {
                 $scope.users = result.data;
                 $scope.users = $scope.users.filter(function(item) {
-                    if($scope.user._id !== item.id) {
+                    if ($scope.user._id !== item.id) {
                         return item;
                     }
                 });
@@ -41,7 +41,7 @@
             console.log("Starting display conversations method for " + $scope.user._id);
             $http.get("/api/conversations").then(function(conversations) {
                 console.log(conversations);
-            })
+            });
         };
 
         self.displayMessages = function(user) {

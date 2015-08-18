@@ -101,7 +101,7 @@ module.exports = function(port, db, githubAuthoriser) {
                         return conversation;
                     }
                 });
-                docs = docs.sort(function(a, b){return b.sent - a.sent;});
+                docs = docs.sort(function(a, b) {return b.sent - a.sent;});
                 //res.json(docs);
                 //res.json(docs.map(function(conversation) {
                 res.json(docs.map(function(conversation) {
@@ -110,7 +110,7 @@ module.exports = function(port, db, githubAuthoriser) {
                     //if ((conversation.to === userId && conversation.from === req.session.user) ||
                     //    (conversation.to === req.session.user && conversation.from === userId)) {
                     //    console.log(conversation);
-                        //return conversation;
+                    //return conversation;
                     return {
                         sent: conversation.sent,
                         body: conversation.body,
@@ -130,7 +130,7 @@ module.exports = function(port, db, githubAuthoriser) {
             if (!err) {
                 docs = docs.filter(function(conversation) {
                     if (((conversation.from === req.session.user && conversation.to) ||
-                        conversation.to === req.session.user ) && conversation.sent) {
+                        conversation.to === req.session.user) && conversation.sent) {
                         //console.log(conversation);
                         return conversation;
                     }
@@ -164,7 +164,7 @@ module.exports = function(port, db, githubAuthoriser) {
             conversations.update(
                 {from: messageReceiver, to: req.session.user},
                 {$set: {seen: true}},
-                {multi:true}
+                {multi: true}
                 );
             //console.log("Finished if loop to update seen");
             res.sendStatus(200);
