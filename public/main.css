@@ -8,6 +8,11 @@
     margin-left: 25px;
 }
 
+.message-table {
+    max-height: 684px;
+    overflow: auto;
+}
+
 .message-sender {
     width: 120px;
     background-color: #dff0d8;
@@ -28,8 +33,11 @@
 
 .message-date-seen {
     width: 100px;
+    background-color: #f5f5f5;
 }
 
 .message-date-unseen {
     width: 100px;
+    background-color: #fcf8e3
+    /*background-color: #f2dede;*/
 }

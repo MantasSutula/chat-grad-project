@@ -91,7 +91,7 @@ module.exports = function(port, db, githubAuthoriser) {
 
     app.get("/api/conversations/:id", function(req, res) {
         var userId = req.params.id;
-        console.log(req.params);
+        //console.log(req.params);
         conversations.find().toArray(function(err, docs) {
             if (!err) {
                 docs = docs.filter(function(conversation) {
@@ -101,19 +101,15 @@ module.exports = function(port, db, githubAuthoriser) {
                         return conversation;
                     }
                 });
-                console.log("After filter");
-                console.log(docs);
-                docs = docs.sort(function(a, b){return b.sent - a.sent});
-                console.log("After sort");
-                console.log(docs);
+                docs = docs.sort(function(a, b){return b.sent - a.sent;});
                 //res.json(docs);
                 //res.json(docs.map(function(conversation) {
                 res.json(docs.map(function(conversation) {
-                    console.log("Comparing: " + conversation.to + " and " +
-                        conversation.from +  " to: " + userId);
+                    //console.log("Comparing: " + conversation.to + " and " +
+                    //    conversation.from +  " to: " + userId);
                     //if ((conversation.to === userId && conversation.from === req.session.user) ||
                     //    (conversation.to === req.session.user && conversation.from === userId)) {
-                        console.log(conversation);
+                    //    console.log(conversation);
                         //return conversation;
                     return {
                         sent: conversation.sent,
@@ -132,14 +128,19 @@ module.exports = function(port, db, githubAuthoriser) {
     app.get("/api/conversations", function(req, res) {
         conversations.find().toArray(function(err, docs) {
             if (!err) {
-                console.log("Docs ALL:");
-                console.log(docs);
-                console.log("Docs Done!");
+                docs = docs.filter(function(conversation) {
+                    if (((conversation.from === req.session.user && conversation.to) ||
+                        conversation.to === req.session.user ) && conversation.sent) {
+                        //console.log(conversation);
+                        return conversation;
+                    }
+                });
                 res.json(docs.map(function(conversation) {
                     console.log(conversation);
                     return {
-                        user: conversation.userName,
-                        lastMessage: conversation.lastMessage,
+                        to: conversation.to,
+                        from: conversation.from,
+                        lastMessage: conversation.sent,
                         anyUnseen: conversation.anyUnseen
                     };
                 }));
@@ -150,18 +151,37 @@ module.exports = function(port, db, githubAuthoriser) {
     });
 
     app.put("/api/conversations/:id", function(req, res) {
-
+        var messageReceiver = req.params.id;
+        //console.log(messageReceiver + " " + req.body.seen + " " + req.session.user);
+        if (req.body.seen) {
+            //console.log("Entering if loop to update seen");
+            //conversations.findAndModify({
+            //    query: {from: messageReceiver, to: req.session.user},
+            //    sort: {seen: false},
+            //    update: {$set: {seen: true}},
+            //    upsert: false
+            //});
+            conversations.update(
+                {from: messageReceiver, to: req.session.user},
+                {$set: {seen: true}},
+                {multi:true}
+                );
+            //console.log("Finished if loop to update seen");
+            res.sendStatus(200);
+        } else {
+            //console.log("Triggered 500 error");
+            res.sendStatus(500);
+        }
     });
 
     app.post("/api/conversations/:id", function(req, res) {
-        var conversationId = req.params.id;
-        console.log(conversationId + " " + req.body.sent + " " + req.body.body + " " + req.session.user);
+        var messageReceiver = req.params.id;
+        //console.log(messageReceiver + " " + req.body.sent + " " + req.body.body + " " + req.session.user);
         conversations.insert({
-            to: conversationId,
+            to: messageReceiver,
             sent: req.body.sent,
             body: req.body.body,
             from: req.session.user,
-            anyUnseen: true,
             seen: false
         });
         res.sendStatus(201);
