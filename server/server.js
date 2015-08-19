@@ -176,9 +176,12 @@ module.exports = function(port, db, githubAuthoriser) {
                     }
                     arrayOfObjects.push(smallObject);
                 }
-                //FOR LOOP
-                docs.splice(0, arrayOfObjects[0].index);
-                docs.splice(1, docs.length);
+                //TODO FOR LOOP
+                for (var i = 0; i < arrayOfObjects.length; i++) {
+                    docs.splice(0, arrayOfObjects[i].index);
+                    docs.splice(1, docs.length);
+                }
+
                 console.log("After sort and remove duplicates");
                 console.log(docs);
                 res.json(docs.map(function(conversation) {
@@ -380,11 +383,32 @@ module.exports = function(port, db, githubAuthoriser) {
             console.log("Group found:");
             console.log(group);
             if (group !== null) {
-                //groups.find(
-                //    { _id: req.params.groupId },
-                //    { justOne: true, writeConcern:1 }
-                //
-                //)
+                var groupUsers = group.users;
+                groupUsers = groupUsers.filter(function(item) {
+                    if (item !== req.params.id) {
+                        return item;
+                    }
+                })
+                //for (var i = 0; i < groupUsers.length; i++) {
+                //    if (groupUsers[i] === req.params.id) {
+                //        groupUsers.remove(groupUsers[i]);
+                //    }
+                //}
+                console.log("After filter");
+                console.log(groupUsers);
+                groups.update(
+                    {_id: req.params.groupId},
+                    { $set: {users: groupUsers}},
+                    {w:1, wtimeout:5000, multi: false}, function(err, response) {
+                        if (!err) {
+                            if (response.result.nModified > 0) {
+                                res.sendStatus(200);
+                            } else {
+                                res.sendStatus(204);
+                            }
+                        }
+                    }
+                );
             } else {
                 res.sendStatus(404);
             }

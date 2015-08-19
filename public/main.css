@@ -28,7 +28,6 @@
 .message-table {
     max-height: 684px;
     overflow-y: auto;
-    display: inline-block;
     word-break: break-word;
 }
 
@@ -38,6 +37,7 @@
 }
 
 .message-text-sender {
+    width: auto;
     /*word-wrap: break-word;*/
     background-color: #dff0d8;
 }

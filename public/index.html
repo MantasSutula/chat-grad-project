@@ -14,13 +14,13 @@
             <h1 ng-show="!loggedIn" class="title-text">SuperMegaFabulicious Chat Application!</h1>
         </div>
         <a ng-show="!loggedIn" href="{{loginUri}}">Log in</a>
-        <button type="button" ng-click="main.createGroup()">Master button create</button>
+        <button type="button" ng-click="main.createGroup()">CREATE GROUP</button>
         <button type="button" ng-click="main.addUserToGroup()">Add Jack to group</button>
         <button type="button" ng-click="main.removeGroupUser()">Remove Jack from group</button>
-        <button type="button" ng-click="main.displayGroups()">Master button</button>
-        <button type="button" ng-click="main.displayGroupDetails()">Master button ONE</button>
-        <button type="button" ng-click="main.getGroupUsers()">Master button ALL USERS</button>
-        <button type="button" ng-click="main.removeGroup()">Master button DELETE</button>
+        <button type="button" ng-click="main.displayGroups()">DISPLAY ALL GROUPS</button>
+        <button type="button" ng-click="main.displayGroupDetails()">DISPLAY ONE GROUP</button>
+        <button type="button" ng-click="main.getGroupUsers()">DISPLAY GROUP ALL USERS</button>
+        <button type="button" ng-click="main.removeGroup()">DELETE GROUP</button>
         <ul>
             <li ng-repeat="group in groups">
                 {{group}}
@@ -33,11 +33,13 @@
             </div>
             <ul class="list-group">
                 <li class="list-group-item" ng-repeat="item in users | searchFor:searchString">
-                    <span ng-repeat="conversation in userConversations" ng-click="main.displayMessages(item)">
-                        <img src="{{item.avatarUrl}}" class="user-icon"/>
-                        <span class="user-name">{{item.name}}</span>
-                        <span ng-show="{{!item.name}}">{{item.id}}</span>
-                        <span class="glyphicon glyphicon-inbox new-message" ng-if="conversation.user === item.id && conversation.anyUnseen"></span>
+                    <span ng-click="main.displayMessages(item)">
+                            <img src="{{item.avatarUrl}}" class="user-icon"/>
+                            <span class="user-name">{{item.name}}</span>
+                            <span ng-show="{{!item.name}}">{{item.id}}</span>
+                            <span ng-repeat="conversation in userConversations" ng-click="main.displayMessages(item)">
+                                <span class="glyphicon glyphicon-inbox new-message" ng-if="conversation.user === item.id && conversation.anyUnseen"></span>
+                            </span>
                     </span>
                 </li>
             </ul>
