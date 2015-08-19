@@ -70,3 +70,7 @@
 .new-message-background {
     background-color: #dff0d8;
 }
+
+.conversation-item {
+    display: inline-flex;
+}

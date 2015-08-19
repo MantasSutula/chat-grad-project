@@ -14,6 +14,15 @@
             <h1 ng-show="!loggedIn" class="title-text">SuperMegaFabulicious Chat Application!</h1>
         </div>
         <a ng-show="!loggedIn" href="{{loginUri}}">Log in</a>
+        <div ng-show="loggedIn" class="conversations">
+            <ul class="list-group">
+                <li class="list-group-item conversation-item" ng-repeat="item in userConversations">
+                        <span ng-repeat="user in users">
+                            <span ng-show="user.id === item.user" ng-click="main.displayMessages(user)">{{user.name}}</span>
+                        </span>
+                </li>
+            </ul>
+        </div>
         <button type="button" ng-click="main.createGroup()">CREATE GROUP</button>
         <button type="button" ng-click="main.addUserToGroup()">Add Jack to group</button>
         <button type="button" ng-click="main.removeGroupUser()">Remove Jack from group</button>
@@ -28,8 +37,9 @@
         </ul>
         <section ng-show="loggedIn" class="col-sm-3">
             <h2>List of users</h2>
-            <div>
+            <div class="btn-group-sm">
                 <input type="text" ng-model="searchString" placeholder="Enter username" />
+                <button type="button" class="btn btn-default" ng-click="createGroup(user)">Create Group</button>
             </div>
             <ul class="list-group">
                 <li class="list-group-item" ng-repeat="item in users | searchFor:searchString">
@@ -43,16 +53,6 @@
                     </span>
                 </li>
             </ul>
-            <div class="conversations">
-                <h2>List of conversations</h2>
-                <ul class="list-group">
-                    <li class="list-group-item" ng-repeat="item in userConversations">
-                        <span ng-repeat="user in users">
-                            <span ng-show="user.id === item.user" ng-click="main.displayMessages(user)">{{user.name}}</span>
-                        </span>
-                    </li>
-                </ul>
-            </div>
         </section>
         <div ng-if="main.isSendingMessage" class="table-responsive col-sm-9">
             <h4>Send a message to {{main.sendingMessage.name}}</h4>
