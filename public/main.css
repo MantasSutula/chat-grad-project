@@ -27,7 +27,9 @@
 
 .message-table {
     max-height: 684px;
-    overflow: auto;
+    overflow-y: auto;
+    display: inline-block;
+    word-break: break-word;
 }
 
 .message-sender {
@@ -36,6 +38,7 @@
 }
 
 .message-text-sender {
+    /*word-wrap: break-word;*/
     background-color: #dff0d8;
 }
 
@@ -45,6 +48,7 @@
 }
 
 .message-text-receiver {
+    /*word-wrap: break-word;*/
     background-color: #d9edf7;
 }
 

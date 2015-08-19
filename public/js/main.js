@@ -188,7 +188,7 @@
         };
 
         self.getGroupUsers = function() {
-            $http.get("api/" + "first-group" + "/users")
+            $http.get("/api/groups/" + "first-group" + "/users")
                 .then(function(response) {
                     extract(response);
                 })
@@ -197,6 +197,17 @@
                             error.status + " - " + error.statusText;
                 })
         }
+
+        self.removeGroupUser = function() {
+            $http.delete("/api/groups/" + "first-group" + "/users/" + "jackarnstein")
+                .then(function(response) {
+                    extract(response);
+                })
+                .catch(function(error) {
+                    self.error = "Failed to remove user from the group. Server returned " +
+                            error.status + " - " + error.statusText;
+                })
+        };
     });
     app.filter("searchFor", function() {
         return function(arr, searchString) {

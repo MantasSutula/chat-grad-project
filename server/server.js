@@ -288,14 +288,14 @@ module.exports = function(port, db, githubAuthoriser) {
     app.get("/api/groups/:id", function(req, res) {
         groups.findOne({
             _id: req.params.id
-        }, function(err, group) {
+        }, {_id: 1, title: 1}, function(err, group) {
             console.log("Group");
             console.log(group);
             if (group !== null) {
-                returnObject = newObject();
-                returnObject._id = group._id;
-                returnObject.title = group.title;
-                res.json(returnObject);
+                //returnObject = new Object();
+                //returnObject._id = group._id;
+                //returnObject.title = group.title;
+                res.json(group);
             } else {
                 res.sendStatus(404);
             }
@@ -305,30 +305,26 @@ module.exports = function(port, db, githubAuthoriser) {
 
     app.delete("/api/groups/:id", function(req, res) {
         console.log("Request to remove id: " + req.params.id);
-        // DEBUGGING REASONS
-        //groups.find().toArray(function(err, docs) {
-        //    if (!err) {
-        //        console.log("ALL GROUPS");
-        //        console.log(docs);
-        //    }
-        //});
-        // REMOVE ALL COLLECTION ITEMS
+        // TODO Have a callback running
         groups.remove(
-            {_id: req.params.id
-            }, function(err, group) {
+            {_id: req.params.id}, {w:1}, function(err, result) {
                 console.log("err");
                 console.log(err);
-                console.log("group");
-                console.log(group);
+                console.log("result");
+                console.log(result);
                 if (!err) {
-                    console.log("Deleted");
-                    res.sendStatus(200);
+                    //if (numberOfRemoved > 0) {
+                        console.log("Deleted");
+                        res.sendStatus(200);
+                    //} else {
+                    //    console.log("Not Found");
+                    //    res.sendStatus(404);
+                    //}
                 } else {
                     console.log("Not Found");
                     res.sendStatus(404);
                 }
         });
-        res.sendStatus(200);
     });
 
     app.put("/api/groups/:groupId/users/:id", function(req, res) {
@@ -364,15 +360,31 @@ module.exports = function(port, db, githubAuthoriser) {
     app.get("/api/groups/:groupId/users", function(req, res) {
         groups.findOne({
             _id: req.params.groupId
+        }, {_id: 0, users: 1}, function(err, group) {
+            console.log("Group found:");
+            console.log(group);
+            if (group !== null) {
+                //returnObject = new Object();
+                //returnObject = group.users;
+                res.send(group);
+            } else {
+                res.sendStatus(404);
+            }
+        })
+    });
+
+    app.delete("/api/groups/:groupId/users/:id", function(req, res) {
+        groups.findOne({
+            _id: req.params.groupId
         }, function(err, group) {
             console.log("Group found:");
             console.log(group);
             if (group !== null) {
-                console.log("Group found:");
-                console.log(group);
-                returnObject = newObject();
-                returnObject = group.users;
-                res.send(returnObject);
+                //groups.find(
+                //    { _id: req.params.groupId },
+                //    { justOne: true, writeConcern:1 }
+                //
+                //)
             } else {
                 res.sendStatus(404);
             }
