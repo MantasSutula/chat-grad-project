@@ -146,8 +146,34 @@
                 })
         };
 
+        self.createGroup = function() {
+            var groupObject = new Object();
+            groupObject.title = "Test title";
+            console.log(groupObject);
+            $http.put("/api/groups/" + "first-group", groupObject)
+                .then(function(response) {
+                    extract(response);
+                })
+                .catch(function(error) {
+                    self.error = "Failed to create group. Server returned " +
+                            error.status + " - " + error.statusText;
+                });
+        };
+
         self.removeGroup = function() {
             $http.delete("/api/groups/" + "55d43e9389d0167c115d18b3");
+        };
+
+        self.addUserToGroup = function() {
+            console.log("Adding user to group");
+            $http.put("/api/groups/" + "first-group" + "/users/" + "jackarnstein")
+                .then(function(response) {
+                    extract(response);
+                })
+                .catch(function(error) {
+                    self.error = "Failed to create group. Server returned " +
+                        error.status + " - " + error.statusText;
+                });
         };
     });
     app.filter("searchFor", function() {

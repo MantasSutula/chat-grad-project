@@ -234,17 +234,22 @@ module.exports = function(port, db, githubAuthoriser) {
         var groupId = req.params.id;
         if (req.body.title) {
             groups.findOne({
-                id: groupId
+                _id: groupId
             }, function(err, group) {
-                if (!err) {
+                console.log("Found group: " + group);
+                if (group !== null) {
+                    console.log("Editing group title");
                     group.title = req.body.title;
                     res.sendStatus(200);
                 } else {
+                    console.log("Inserting group");
                     groups.insertOne(
                         {
-                            id: groupId,
-                            title: req.body.title},
-                        {   $addToSet: {users: [req.session.user]}}
+                            _id: groupId,
+                            title: req.body.title,
+                            users: [req.session.user]
+                        },
+                        {   $addToSet: {users: req.session.user}}
                     );
                     res.sendStatus(201);
                 }
@@ -259,14 +264,19 @@ module.exports = function(port, db, githubAuthoriser) {
         var authenticatedUser = req.session.user;
         groups.find().toArray(function(err, docs) {
             if (!err) {
-                // TODO return the groups for authenticated user
+                //TODO return the groups for authenticated user
                 //docs = docs.filter(function(group) {
                 //    console.log("FILTER");
                 //    console.log(group);
                 //});
                 console.log("AFTER FILTER");
                 console.log(docs);
-                res.sendStatus(200);
+                res.json(docs.map(function(group) {
+                    return {
+                        id: group._id,
+                        title: group.title
+                    };
+                }));
                 //res.json(docs);
             } else {
                 res.sendStatus(500);
@@ -276,7 +286,7 @@ module.exports = function(port, db, githubAuthoriser) {
 
     app.get("/api/groups/:id", function(req, res) {
         groups.findOne({
-            id: req.params.id
+            _id: req.params.id
         }, function(err, group) {
             if (!group) {
                 res.json(group);
@@ -297,7 +307,8 @@ module.exports = function(port, db, githubAuthoriser) {
         //    }
         //});
         // REMOVE ALL COLLECTION ITEMS
-        //groups.remove( { } );
+        groups.remove( { } );
+        res.sendStatus(200);
         //groups.findOne({
         //    _id: req.params.id
         //}, function(err, group) {
@@ -320,21 +331,26 @@ module.exports = function(port, db, githubAuthoriser) {
             _id: req.params.id
         }, function(err, user) {
             if (!err) {
-                console.log("Found user: " + user);
+                console.log("Found user: ");
+                console.log(user);
                 groups.findOne({
-                    id: req.params.groupId
+                    _id: req.params.groupId
                 }, function(err, group) {
                     if (!err) {
-                        console.log("Found group: " + group);
-                        group.update(
-                            { },
-                            { $addToSet: {users: [user]}}
+                        console.log("Found group: ");
+                        console.log(group);
+                        groups.update(
+                            { _id: req.params.groupId },
+                            { $addToSet: {users: req.params.id}}
                         );
+                        res.sendStatus(201);
                     } else {
+                        console.log("Group not found");
                         res.sendStatus(404);
                     }
                 })
             } else {
+                console.log("User not found");
                 res.sendStatus(500);
             }
         })

@@ -14,6 +14,8 @@
             <h1 ng-show="!loggedIn" class="title-text">SuperMegaFabulicious Chat Application!</h1>
         </div>
         <a ng-show="!loggedIn" href="{{loginUri}}">Log in</a>
+        <button type="button" ng-click="main.createGroup()">Master button create</button>
+        <button type="button" ng-click="main.addUserToGroup()">Add Jack to group</button>
         <button type="button" ng-click="main.displayGroups()">Master button</button>
         <button type="button" ng-click="main.removeGroup()">Master button delete</button>
         <ul>
