@@ -1,6 +1,7 @@
 var express = require("express");
 var bodyParser = require("body-parser");
 var cookieParser = require("cookie-parser");
+var _= require("underscore-node");
 
 module.exports = function(port, db, githubAuthoriser) {
     var app = express();
@@ -288,8 +289,13 @@ module.exports = function(port, db, githubAuthoriser) {
         groups.findOne({
             _id: req.params.id
         }, function(err, group) {
-            if (!group) {
-                res.json(group);
+            console.log("Group");
+            console.log(group);
+            if (group !== null) {
+                returnObject = newObject();
+                returnObject._id = group._id;
+                returnObject.title = group.title;
+                res.json(returnObject);
             } else {
                 res.sendStatus(404);
             }
@@ -307,23 +313,22 @@ module.exports = function(port, db, githubAuthoriser) {
         //    }
         //});
         // REMOVE ALL COLLECTION ITEMS
-        groups.remove( { } );
+        groups.remove(
+            {_id: req.params.id
+            }, function(err, group) {
+                console.log("err");
+                console.log(err);
+                console.log("group");
+                console.log(group);
+                if (!err) {
+                    console.log("Deleted");
+                    res.sendStatus(200);
+                } else {
+                    console.log("Not Found");
+                    res.sendStatus(404);
+                }
+        });
         res.sendStatus(200);
-        //groups.findOne({
-        //    _id: req.params.id
-        //}, function(err, group) {
-        //    if (group !== null) {
-        //        console.log("Found group: " + group);
-        //        group.update(
-        //            { },
-        //            { $pull: {id: req.params.id}},
-        //            { multi: false }
-        //        );
-        //        res.sendStatus(200);
-        //    } else {
-        //        res.sendStatus(404);
-        //    }
-        //});
     });
 
     app.put("/api/groups/:groupId/users/:id", function(req, res) {
@@ -352,6 +357,24 @@ module.exports = function(port, db, githubAuthoriser) {
             } else {
                 console.log("User not found");
                 res.sendStatus(500);
+            }
+        })
+    });
+
+    app.get("/api/groups/:groupId/users", function(req, res) {
+        groups.findOne({
+            _id: req.params.groupId
+        }, function(err, group) {
+            console.log("Group found:");
+            console.log(group);
+            if (group !== null) {
+                console.log("Group found:");
+                console.log(group);
+                returnObject = newObject();
+                returnObject = group.users;
+                res.send(returnObject);
+            } else {
+                res.sendStatus(404);
             }
         })
     });

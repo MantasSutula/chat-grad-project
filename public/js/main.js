@@ -146,6 +146,17 @@
                 })
         };
 
+        self.displayGroupDetails = function() {
+            $http.get("/api/groups/" + "first-group")
+                .then(function(response) {
+                    $scope.groups = extract(response);
+                })
+                .catch(function(error) {
+                    self.error = "Failed to get group. Server returned " +
+                        error.status + " - " + error.statusText;
+                })
+        };
+
         self.createGroup = function() {
             var groupObject = new Object();
             groupObject.title = "Test title";
@@ -161,7 +172,7 @@
         };
 
         self.removeGroup = function() {
-            $http.delete("/api/groups/" + "55d43e9389d0167c115d18b3");
+            $http.delete("/api/groups/" + "first-group");
         };
 
         self.addUserToGroup = function() {
@@ -175,6 +186,17 @@
                         error.status + " - " + error.statusText;
                 });
         };
+
+        self.getGroupUsers = function() {
+            $http.get("api/" + "first-group" + "/users")
+                .then(function(response) {
+                    extract(response);
+                })
+                .catch(function(error) {
+                    self.error = "Failed to get users of the group. Server returned " +
+                            error.status + " - " + error.statusText;
+                })
+        }
     });
     app.filter("searchFor", function() {
         return function(arr, searchString) {
