@@ -11,6 +11,7 @@ module.exports = function(port, db, githubAuthoriser) {
 
     var users = db.collection("users");
     var conversations = db.collection("conversations");
+    var groups = db.collection("groups");
     var sessions = {};
 
     app.get("/oauth", function(req, res) {
@@ -193,7 +194,7 @@ module.exports = function(port, db, githubAuthoriser) {
     });
 
     app.put("/api/conversations/:id", function(req, res) {
-        var messageReceiver = req.params.id;
+        var messageSender = req.params.id;
         //console.log(messageReceiver + " " + req.body.seen + " " + req.session.user);
         if (req.body.seen) {
             //console.log("Entering if loop to update seen");
@@ -204,10 +205,10 @@ module.exports = function(port, db, githubAuthoriser) {
             //    upsert: false
             //});
             conversations.update(
-                {from: messageReceiver, to: req.session.user},
+                {from: messageSender, to: req.session.user, seen: false},
                 {$set: {seen: true}},
                 {multi: true}
-                );
+            );
             //console.log("Finished if loop to update seen");
             res.sendStatus(200);
         } else {
@@ -218,7 +219,7 @@ module.exports = function(port, db, githubAuthoriser) {
 
     app.post("/api/conversations/:id", function(req, res) {
         var messageReceiver = req.params.id;
-        //console.log(messageReceiver + " " + req.body.sent + " " + req.body.body + " " + req.session.user);
+        console.log(messageReceiver + " " + req.body.sent + " " + req.body.body + " " + req.session.user);
         conversations.insert({
             to: messageReceiver,
             sent: req.body.sent,
@@ -229,7 +230,115 @@ module.exports = function(port, db, githubAuthoriser) {
         res.sendStatus(201);
     });
 
-    
+    app.put("/api/groups/:id", function(req, res) {
+        var groupId = req.params.id;
+        if (req.body.title) {
+            groups.findOne({
+                id: groupId
+            }, function(err, group) {
+                if (!err) {
+                    group.title = req.body.title;
+                    res.sendStatus(200);
+                } else {
+                    groups.insertOne(
+                        {
+                            id: groupId,
+                            title: req.body.title},
+                        {   $addToSet: {users: [req.session.user]}}
+                    );
+                    res.sendStatus(201);
+                }
+            });
+        } else {
+            res.sendStatus(500);
+        }
+
+    });
+
+    app.get("/api/groups", function(req, res) {
+        var authenticatedUser = req.session.user;
+        groups.find().toArray(function(err, docs) {
+            if (!err) {
+                // TODO return the groups for authenticated user
+                //docs = docs.filter(function(group) {
+                //    console.log("FILTER");
+                //    console.log(group);
+                //});
+                console.log("AFTER FILTER");
+                console.log(docs);
+                res.sendStatus(200);
+                //res.json(docs);
+            } else {
+                res.sendStatus(500);
+            }
+        });
+    });
+
+    app.get("/api/groups/:id", function(req, res) {
+        groups.findOne({
+            id: req.params.id
+        }, function(err, group) {
+            if (!group) {
+                res.json(group);
+            } else {
+                res.sendStatus(404);
+            }
+        });
+
+    });
+
+    app.delete("/api/groups/:id", function(req, res) {
+        console.log("Request to remove id: " + req.params.id);
+        // DEBUGGING REASONS
+        //groups.find().toArray(function(err, docs) {
+        //    if (!err) {
+        //        console.log("ALL GROUPS");
+        //        console.log(docs);
+        //    }
+        //});
+        // REMOVE ALL COLLECTION ITEMS
+        //groups.remove( { } );
+        //groups.findOne({
+        //    _id: req.params.id
+        //}, function(err, group) {
+        //    if (group !== null) {
+        //        console.log("Found group: " + group);
+        //        group.update(
+        //            { },
+        //            { $pull: {id: req.params.id}},
+        //            { multi: false }
+        //        );
+        //        res.sendStatus(200);
+        //    } else {
+        //        res.sendStatus(404);
+        //    }
+        //});
+    });
+
+    app.put("/api/groups/:groupId/users/:id", function(req, res) {
+        users.findOne({
+            _id: req.params.id
+        }, function(err, user) {
+            if (!err) {
+                console.log("Found user: " + user);
+                groups.findOne({
+                    id: req.params.groupId
+                }, function(err, group) {
+                    if (!err) {
+                        console.log("Found group: " + group);
+                        group.update(
+                            { },
+                            { $addToSet: {users: [user]}}
+                        );
+                    } else {
+                        res.sendStatus(404);
+                    }
+                })
+            } else {
+                res.sendStatus(500);
+            }
+        })
+    });
 
     return app.listen(port);
 };

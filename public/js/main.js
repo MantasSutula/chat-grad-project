@@ -5,7 +5,8 @@
         var self = this;
         $scope.loggedIn = false;
         $scope.activeChatUser = "";
-        $interval(reloadData, 2000);
+        // REMOVE COMMENT TO POLL
+        //$interval(reloadData, 2000);
 
         self.resetForm = function() {
             self.loading = false;
@@ -132,6 +133,21 @@
                             error.status + " - " + error.statusText;
                     });
             }
+        };
+
+        self.displayGroups = function() {
+            $http.get("/api/groups")
+                .then(function(response) {
+                    $scope.groups = extract(response);
+                })
+                .catch(function(error) {
+                    self.error = "Failed to get groups. Server returned " +
+                            error.status + " - " + error.statusText;
+                })
+        };
+
+        self.removeGroup = function() {
+            $http.delete("/api/groups/" + "55d43e9389d0167c115d18b3");
         };
     });
     app.filter("searchFor", function() {

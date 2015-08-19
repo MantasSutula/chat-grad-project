@@ -10,9 +10,17 @@
     </head>
     <body ng-controller="ChatController as main">
         <div class="title">
-            <h1 class="title-text">Welcome, {{user.name}}!</h1>
+            <h1 ng-show="loggedIn" class="title-text">Welcome, {{user.name}}!</h1>
+            <h1 ng-show="!loggedIn" class="title-text">SuperMegaFabulicious Chat Application!</h1>
         </div>
         <a ng-show="!loggedIn" href="{{loginUri}}">Log in</a>
+        <button type="button" ng-click="main.displayGroups()">Master button</button>
+        <button type="button" ng-click="main.removeGroup()">Master button delete</button>
+        <ul>
+            <li ng-repeat="group in groups">
+                {{group}}
+            </li>
+        </ul>
         <section ng-show="loggedIn" class="col-sm-3">
             <h2>List of users</h2>
             <div>
@@ -53,7 +61,7 @@
                     <td ng-show="{{message.seen}}"  class="message-date-seen">{{message.sent | date:'yyyy-MM-dd HH:mm:ss'}}</td>
                     <td ng-show="{{!message.seen}}" class="message-date-unseen">{{message.sent | date:'yyyy-MM-dd HH:mm:ss'}}</td>
                     <td class="message-receiver" ng-if="main.sendingMessage.id === message.from">{{main.sendingMessage.name}}</td>
-                    <td class="message-sender" ng-if="main.sendingMessage.id !== message.from">{{message.from}}</td>
+                    <td class="message-sender" ng-if="main.sendingMessage.id !== message.from">{{user.name}}</td>
                     <td ng-if="main.sendingMessage.id !== message.from" class="message-text-sender">{{message.body}}</td>
                     <td ng-if="main.sendingMessage.id === message.from" class="message-text-receiver">{{message.body}}</td>
                 </tr>
