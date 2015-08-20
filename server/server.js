@@ -432,7 +432,7 @@ module.exports = function(port, db, githubAuthoriser) {
             _id: req.params.groupId
         }, {_id: 0, users: 1}, function(err, group) {
             console.log("Group found:");
-            console.log(group);
+            console.log(group.users);
             if (group !== null) {
                 //returnObject = new Object();
                 //returnObject = group.users;

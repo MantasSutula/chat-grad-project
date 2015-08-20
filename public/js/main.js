@@ -9,6 +9,7 @@
         $scope.activeChatUser = "";
         $scope.activeChatGroup = "";
         $scope.tempUser = [];
+        $scope.groupUsers = [];
         // REMOVE COMMENT TO POLL
         //$interval(reloadData, 2000);
 
@@ -44,7 +45,36 @@
                     self.error = "Failed to get groups. Server returned " +
                         error.status + " - " + error.statusText;
                 })
-        };
+        }
+
+        function updateRemoveUsers(item) {
+            console.log(item);
+            if (!item.id) {
+                $scope.addGroupUsers = $scope.addGroupUsers.filter(function (user) {
+                    if (user.id !== item) {
+                        return user;
+                    } else {
+                        console.log("Removing");
+                        console.log(user);
+                    }
+
+                });
+            } else {
+                $scope.addGroupUsers = $scope.addGroupUsers.filter(function (user) {
+                    if (user.id !== item.id) {
+                        return user;
+                    } else {
+                        console.log("Removing");
+                        console.log(user);
+                    }
+
+                });
+            }
+        }
+
+        function updateAddUser(item){
+            $scope.addGroupUsers.push(item);
+        }
 
         function reloadData() {
             console.log($scope.activeChatUser);
@@ -53,6 +83,7 @@
                 $scope.user = userResult.data;
                 $http.get("/api/users").then(function(result) {
                     $scope.users = result.data;
+                    $scope.addGroupUsers = $scope.users;
                     $scope.users = $scope.users.filter(function(item) {
                         if ($scope.user._id !== item.id) {
                             return item;
@@ -80,6 +111,7 @@
             $scope.user = userResult.data;
             $http.get("/api/users").then(function(result) {
                 $scope.users = result.data;
+                $scope.addGroupUsers = $scope.users;
                 $scope.users = $scope.users.filter(function(item) {
                     if ($scope.user._id !== item.id) {
                         return item;
@@ -248,9 +280,13 @@
             console.log(group);
             $http.get("/api/groups/" + group.id + "/users")
                 .then(function(response) {
-                    $scope.groupsUsers = extract(response);
+                    var tempGroupsUsers = extract(response);
+                    tempGroupsUsers.forEach(function(item) {
+                        updateRemoveUsers(item);
+                        $scope.groupUsers.push(item);
+                    });
                     console.log("Group members: ");
-                    console.log($scope.groupsUsers);
+                    console.log($scope.groupUsers);
                 })
                 .catch(function(error) {
                     self.error = "Failed to get users of the group. Server returned " +
@@ -280,8 +316,20 @@
         self.addUserTemp = function(item) {
             console.log("Adding to tempUser");
             console.log(item);
+            updateRemoveUsers(item);
             $scope.tempUser.push(item);
         }
+
+        self.removeUserTemp = function(item) {
+            console.log("Removing from tempUser");
+            console.log(item);
+            updateAddUser(item);
+            $scope.tempUser = $scope.tempUser.filter(function(temp) {
+                if (temp.id !== item.id) {
+                    return temp;
+                }
+            })
+        };
     });
     app.filter("searchFor", function() {
         return function(arr, searchString) {

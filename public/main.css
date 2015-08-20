@@ -73,6 +73,7 @@
 
 .conversation-item {
     display: inline-flex;
+    word-break: break-all;
 }
 
 .conversation-title {

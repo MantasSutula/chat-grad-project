@@ -77,7 +77,7 @@
         </section>
         <!-- Sending message to a person -->
         <div ng-if="main.isSendingMessage" class="table-responsive col-sm-9">
-            <h4>Send a message to {{main.sendingMessage.name}}{{main.sendingMessage.title}}</h4>
+            <h4>Send a message to {{main.sendingMessage.name}}</h4>
             <hr/>
             <form name="main.sendForm" role="form" id="send-form"
                   ng-submit="main.sendMessage(main.sendingMessage, main.newMessage, main.sendForm.$valid)">
@@ -123,24 +123,23 @@
                 <form name="main.AddUsersGroupForm" role="form" ng-submit="main.addUserToGroup(main.newUsers)">
                     <div class="form-group">
                         <label for="group-id">Group ID</label>
-                        <input type="text" class="form-control" id="group-id-user" placeholder="{{activeChatGroup.id}}" required="true"/>
+                        <input type="text" class="form-control" id="group-id-user" ng-readonly="{{activeChatGroup.id}}" required="true"/>
                         <ul class="list-group conversation-item">
                             <li class="list-group-item conversation-title" ng-repeat="temp in tempUser">
-                                <span>{{temp.name}}</span>
+                                <span >{{temp.name}}</span>
+                                <span ng-show="{{!temp.name}}">{{temp.id}}</span>
+                                <button type="button" class="close" ng-click="main.removeUserTemp(temp)">&times;</button>
                             </li>
                         </ul>
                     </div>
                     <!-- TODO add users when creating group-->
-                    <div class="form-group">
+                    <div>
                         <label for="group-users">Group Members</label>
                         <ul id="group-users">
-                            <li class="list-group-item" ng-repeat="item in users" ng-click="main.addUserTemp(item)">
-                                <span ng-repeat="groupUser in groupsUsers">
-                                    {{groupsUsers}} & {{item.id}}
-                                    <img src="{{item.avatarUrl}}" class="user-icon"/>
-                                    <span class="user-name">{{item.name}}</span>
-                                    <span ng-show="{{!item.name}}">{{item.id}}</span>
-                                </span>
+                            <li class="list-group-item" ng-repeat="item in addGroupUsers" ng-click="main.addUserTemp(item)">
+                                <img src="{{item.avatarUrl}}" class="user-icon"/>
+                                <span class="user-name">{{item.name}}</span>
+                                <span ng-show="{{!item.name}}">{{item.id}}</span>
                             </li>
                         </ul>
                     </div>
