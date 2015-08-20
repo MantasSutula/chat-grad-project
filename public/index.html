@@ -28,18 +28,6 @@
                 </li>
             </ul>
         </div>
-        <button type="button" ng-click="main.createGroup()">CREATE GROUP</button>
-        <button type="button" ng-click="main.addUserToGroup()">Add Jack to group</button>
-        <button type="button" ng-click="main.removeGroupUser()">Remove Jack from group</button>
-        <button type="button" ng-click="main.displayGroups()">DISPLAY ALL GROUPS</button>
-        <button type="button" ng-click="main.displayGroupDetails()">DISPLAY ONE GROUP</button>
-        <button type="button" ng-click="main.getGroupUsers()">DISPLAY GROUP ALL USERS</button>
-        <button type="button" ng-click="main.removeGroup()">DELETE GROUP</button>
-        <ul>
-            <li ng-repeat="group in groups">
-                {{group}}
-            </li>
-        </ul>
         <section ng-show="loggedIn" class="col-sm-3">
             <h2>List of users</h2>
             <div class="btn-group-sm">
@@ -57,10 +45,16 @@
                         <input type="text" class="form-control" id="group-title" placeholder="Title" ng-model="main.newGroup.title" required="true"/>
                     </div>
                     <!-- TODO add users when creating group-->
-                    <!--<div class="form-group">-->
-                        <!--<label for="group-users">Group Members</label>-->
-                        <!--<input type="text" class="form-control" placeholder="Username" ng-model="main.newGroup.id">-->
-                    <!--</div>-->
+                    <div>
+                        <label for="group-users">Group Members</label>
+                        <ul id="group-users">
+                            <li class="list-group-item" ng-repeat="item in addGroupUsers" ng-click="main.addUserTemp(item)">
+                                <img src="{{item.avatarUrl}}" class="user-icon"/>
+                                <span class="user-name">{{item.name}}</span>
+                                <span ng-show="{{!item.name}}">{{item.id}}</span>
+                            </li>
+                        </ul>
+                    </div>
                     <button type="submit" class="btn btn-default" id="submit-group">Submit</button>
                 </form>
             </modal>
@@ -119,18 +113,24 @@
                 </table>
             </div>
             <button type="button" data-toggle="modal" data-target="#addUserToGroup">Add Users</button>
+            <button type="button" ng-click="main.removeGroupUser(activeChatGroup, user)">Exit Group</button>
+            <button type="button" ng-click="main.createGroup()">Edit Group Title</button>
             <modal id="addUserToGroup" title="Add users to group form" visible="showAddUsersModal">
-                <form name="main.AddUsersGroupForm" role="form" ng-submit="main.addUserToGroup(main.newUsers)">
+                <form name="main.AddUsersGroupForm" role="form" ng-submit="main.addUserToGroup(activeChatGroup)">
                     <div class="form-group">
                         <label for="group-id">Group ID</label>
-                        <input type="text" class="form-control" id="group-id-user" ng-readonly="{{activeChatGroup.id}}" required="true"/>
-                        <ul class="list-group conversation-item">
-                            <li class="list-group-item conversation-title" ng-repeat="temp in tempUser">
+                        <input type="text" class="form-control" id="group-id-user" ng-readonly="true" value="{{activeChatGroup.id}}" required="true"/>
+                        <div class="list-group conversation-item">
+                            <div class="list-group-item conversation-title-group" ng-repeat="temp1 in groupUsers">
+                                <span>{{temp1}}</span>
+                                <button type="button" class="close" ng-click="main.removeGroupUser(activeChatGroup, temp1)">&times;</button>
+                            </div>
+                            <div class="list-group-item conversation-title-group" ng-repeat="temp in tempUser">
                                 <span >{{temp.name}}</span>
                                 <span ng-show="{{!temp.name}}">{{temp.id}}</span>
                                 <button type="button" class="close" ng-click="main.removeUserTemp(temp)">&times;</button>
-                            </li>
-                        </ul>
+                            </div>
+                        </div>
                     </div>
                     <!-- TODO add users when creating group-->
                     <div>

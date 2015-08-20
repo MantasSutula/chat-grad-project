@@ -169,9 +169,10 @@ module.exports = function(port, db, githubAuthoriser) {
                 });
                 docs = docs.sort(function(a, b) {
                     var temp = b.from - a.from;
-                    return temp == 1? b.sent - a.sent : temp;
+                    return temp === 1? b.sent - a.sent : temp;
                 });
                 // Remove duplicate elements, and only leave the newest date one
+                console.log(docs);
                 var arrayOfObjects = [];
                 for (var j = 0; j < docs.length - 1; j++) {
                     var smallObject = docs[j];
@@ -181,35 +182,25 @@ module.exports = function(port, db, githubAuthoriser) {
                                 smallObject = docs[i];
                                 smallObject.index = i;
                             }
-                        }
-                        else {
+                        } else {
+                            j = i;
                             break;
                         }
-                            //console.log(docs[j]);
-                            //console.log("comparing to");
-                            //console.log(docs[i]);
-                            //if (docs[j].sent > docs[i].sent) {
-                            //    console.log("TRUECompared: " + docs[i].from + " to: " + docs[i + 1].from + "  With timestamp: " + docs[i].sent + " to: " + docs[i + 1].sent + " REMOVING " + docs[i + 1].sent);
-                            //    //console.log(docs.splice(i, 1));
-                            //    console.log(docs.length);
-                            //    docs.splice(i, 1);
-                            //    console.log(docs.length);
-                            //    i = i--;
-                            //}
-                            //else {
-                            //    console.log("FALSECompared: " + docs[i].from + " to: " + docs[i + 1].from + "  With timestamp: " + docs[i].sent + " to: " + docs[i + 1].sent + " REMOVING " + docs[i].sent);
-                            //    //console.log(docs.splice(i, 1));
-                            //    docs.splice(j, 1);
-                            //}
-                        j = smallObject.index;
                     }
+                    j = smallObject.index + 1;
+                    console.log(smallObject.index);
+                    console.log("loop " + j);
+                    console.log(smallObject);
                     arrayOfObjects.push(smallObject);
                 }
                 //TODO FOR LOOP
                 for (var i = 0; i < arrayOfObjects.length; i++) {
-                    docs.splice(0, arrayOfObjects[i].index);
-                    docs.splice(1, docs.length);
+                    docs.splice(i, arrayOfObjects[i].index);
+                    //docs.splice(0, arrayOfObjects[i].index);
+                    // TODO wrong here. needs to be arrayOfObjects.length, docs.length
+                    //docs.splice(1, docs.length);
                 }
+                docs.splice(arrayOfObjects.length - 1, docs.length - 1);
 
                 console.log("After sort and remove duplicates");
                 console.log(docs);
@@ -328,7 +319,6 @@ module.exports = function(port, db, githubAuthoriser) {
                 //});
                 docs = docs.filter(function(group) {
                     var userExists = false;
-                    console.log(group);
                     if (group.users) {
                         for (var j = 0; j < group.users.length; j++) {
                             if (group.users[j] === authenticatedUser) {
@@ -340,8 +330,6 @@ module.exports = function(port, db, githubAuthoriser) {
                         }
                     }
                 });
-                console.log("AFTER FILTER");
-                console.log(docs);
                 res.json(docs.map(function(group) {
                     return {
                         id: group._id,
@@ -359,8 +347,6 @@ module.exports = function(port, db, githubAuthoriser) {
         groups.findOne({
             _id: req.params.id
         }, {_id: 1, title: 1}, function(err, group) {
-            console.log("Group");
-            console.log(group);
             if (group !== null) {
                 //returnObject = new Object();
                 //returnObject._id = group._id;
@@ -431,8 +417,6 @@ module.exports = function(port, db, githubAuthoriser) {
         groups.findOne({
             _id: req.params.groupId
         }, {_id: 0, users: 1}, function(err, group) {
-            console.log("Group found:");
-            console.log(group.users);
             if (group !== null) {
                 //returnObject = new Object();
                 //returnObject = group.users;
@@ -447,8 +431,6 @@ module.exports = function(port, db, githubAuthoriser) {
         groups.findOne({
             _id: req.params.groupId
         }, function(err, group) {
-            console.log("Group found:");
-            console.log(group);
             if (group !== null) {
                 var groupUsers = group.users;
                 groupUsers = groupUsers.filter(function(item) {
