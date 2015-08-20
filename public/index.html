@@ -17,11 +17,14 @@
         </div>
         <a ng-show="!loggedIn" href="{{loginUri}}">Log in</a>
         <div ng-show="loggedIn" class="conversations">
-            <ul class="list-group">
-                <li class="list-group-item conversation-item" ng-repeat="item in userConversations">
-                        <span ng-repeat="user in users">
-                            <span ng-show="user.id === item.user" ng-click="main.displayMessages(user)">{{user.name}}</span>
+            <ul class="list-group conversation-item">
+                <li class="list-group-item conversation-title" ng-repeat="item in userConversations">
+                        <span ng-repeat="user in users" ng-click="main.displayMessages(user)">
+                            <span ng-show="user.id === item.user">{{user.name}}</span>
                         </span>
+                </li>
+                <li class="list-group-item conversation-title" ng-repeat="group in groups" ng-click="main.displayGroupMessages(group)">
+                        <span>{{group.title}}</span>
                 </li>
             </ul>
         </div>
@@ -41,9 +44,9 @@
             <h2>List of users</h2>
             <div class="btn-group-sm">
                 <input type="text" ng-model="searchString" placeholder="Enter username" />
-                <button type="button" class="btn btn-default" ng-click="toggleModal()">Create Group</button>
+                <button type="button" class="btn btn-default" data-toggle="modal" data-target="#createGroup">Create Group</button>
             </div>
-            <modal title="Create group form" visible="showModal">
+            <modal id="createGroup" title="Create group form">
                 <form name="main.createGroupForm" role="form" ng-submit="main.createGroup(main.newGroup, main.createGroupForm.$valid)">
                     <div class="form-group">
                         <label for="group-id">Group ID</label>
@@ -53,24 +56,28 @@
                         <label for="group-title">Title</label>
                         <input type="text" class="form-control" id="group-title" placeholder="Title" ng-model="main.newGroup.title" required="true"/>
                     </div>
+                    <!-- TODO add users when creating group-->
+                    <!--<div class="form-group">-->
+                        <!--<label for="group-users">Group Members</label>-->
+                        <!--<input type="text" class="form-control" placeholder="Username" ng-model="main.newGroup.id">-->
+                    <!--</div>-->
                     <button type="submit" class="btn btn-default" id="submit-group">Submit</button>
                 </form>
             </modal>
             <ul class="list-group">
-                <li class="list-group-item" ng-repeat="item in users | searchFor:searchString">
-                    <span ng-click="main.displayMessages(item)">
+                <li class="list-group-item" ng-repeat="item in users | searchFor:searchString" ng-click="main.displayMessages(item)">
                             <img src="{{item.avatarUrl}}" class="user-icon"/>
                             <span class="user-name">{{item.name}}</span>
                             <span ng-show="{{!item.name}}">{{item.id}}</span>
-                            <span ng-repeat="conversation in userConversations" ng-click="main.displayMessages(item)">
+                            <span ng-repeat="conversation in userConversations">
                                 <span class="glyphicon glyphicon-inbox new-message" ng-if="conversation.user === item.id && conversation.anyUnseen"></span>
                             </span>
-                    </span>
                 </li>
             </ul>
         </section>
+        <!-- Sending message to a person -->
         <div ng-if="main.isSendingMessage" class="table-responsive col-sm-9">
-            <h4>Send a message to {{main.sendingMessage.name}}</h4>
+            <h4>Send a message to {{main.sendingMessage.name}}{{main.sendingMessage.title}}</h4>
             <hr/>
             <form name="main.sendForm" role="form" id="send-form"
                   ng-submit="main.sendMessage(main.sendingMessage, main.newMessage, main.sendForm.$valid)">
@@ -82,13 +89,64 @@
                 <tr ng-repeat="message in conversations">
                     <td ng-show="{{message.seen}}"  class="message-date-seen">{{message.sent | date:'yyyy-MM-dd HH:mm:ss'}}</td>
                     <td ng-show="{{!message.seen}}" class="message-date-unseen">{{message.sent | date:'yyyy-MM-dd HH:mm:ss'}}</td>
-                    <td class="message-receiver" ng-if="main.sendingMessage.id === message.from">{{main.sendingMessage.name}}</td>
-                    <td class="message-sender" ng-if="main.sendingMessage.id !== message.from">{{user.name}}</td>
+                    <td class="message-receiver" ng-show="user._id !== message.from">{{message.from}}</td>
+                    <td class="message-sender" ng-show="user._id === message.from">{{user.name}}</td>
                     <td ng-if="main.sendingMessage.id !== message.from" class="message-text-sender">{{message.body}}</td>
                     <td ng-if="main.sendingMessage.id === message.from" class="message-text-receiver">{{message.body}}</td>
                 </tr>
             </table>
             </div>
+        </div>
+        <!-- Sending message to a group-->
+        <div ng-if="main.isSendingGroupMessage" class="table-responsive col-sm-9">
+            <h4>Send a message to {{main.sendingMessage.title}}</h4>
+            <hr/>
+            <form name="main.sendForm" role="form" id="send-group-form"
+                  ng-submit="main.sendMessage(main.sendingMessage, main.newMessage, main.sendForm.$valid)">
+                <input type="text" class="form-control" id="new-message-group" ng-model="main.newMessage.body" required="true">
+                <button type="submit" class="form-control" id="submit-message-group">Send</button>
+            </form>
+            <div class="message-table">
+                <table class="table table-bordered table-hover">
+                    <tr ng-repeat="message in conversations">
+                        <td ng-show="{{message.seen}}"  class="message-date-seen">{{message.sent | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+                        <td ng-show="{{!message.seen}}" class="message-date-unseen">{{message.sent | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+                        <td class="message-receiver" ng-show="user._id !== message.from">{{message.from}}</td>
+                        <td class="message-sender" ng-show="user._id === message.from">{{user.name}}</td>
+                        <td ng-if="main.sendingMessage.id !== message.from" class="message-text-sender">{{message.body}}</td>
+                        <td ng-if="main.sendingMessage.id === message.from" class="message-text-receiver">{{message.body}}</td>
+                    </tr>
+                </table>
+            </div>
+            <button type="button" data-toggle="modal" data-target="#addUserToGroup">Add Users</button>
+            <modal id="addUserToGroup" title="Add users to group form" visible="showAddUsersModal">
+                <form name="main.AddUsersGroupForm" role="form" ng-submit="main.addUserToGroup(main.newUsers)">
+                    <div class="form-group">
+                        <label for="group-id">Group ID</label>
+                        <input type="text" class="form-control" id="group-id-user" placeholder="{{activeChatGroup.id}}" required="true"/>
+                        <ul class="list-group conversation-item">
+                            <li class="list-group-item conversation-title" ng-repeat="temp in tempUser">
+                                <span>{{temp.name}}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <!-- TODO add users when creating group-->
+                    <div class="form-group">
+                        <label for="group-users">Group Members</label>
+                        <ul id="group-users">
+                            <li class="list-group-item" ng-repeat="item in users" ng-click="main.addUserTemp(item)">
+                                <span ng-repeat="groupUser in groupsUsers">
+                                    {{groupsUsers}} & {{item.id}}
+                                    <img src="{{item.avatarUrl}}" class="user-icon"/>
+                                    <span class="user-name">{{item.name}}</span>
+                                    <span ng-show="{{!item.name}}">{{item.id}}</span>
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                    <button type="submit" class="btn btn-default" id="submit-group-user">Submit</button>
+                </form>
+            </modal>
         </div>
         <div class="alert alert-danger" role="alert" ng-if="main.error">
             <span id="error">{{main.error}}</span>

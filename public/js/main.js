@@ -5,7 +5,10 @@
         var self = this;
         $scope.loggedIn = false;
         $scope.showModal = false;
+        $scope.showAddUsersModal = false;
         $scope.activeChatUser = "";
+        $scope.activeChatGroup = "";
+        $scope.tempUser = [];
         // REMOVE COMMENT TO POLL
         //$interval(reloadData, 2000);
 
@@ -32,6 +35,17 @@
             });
         }
 
+        function displayGroups() {
+            $http.get("/api/groups")
+                .then(function(response) {
+                    $scope.groups = extract(response);
+                })
+                .catch(function(error) {
+                    self.error = "Failed to get groups. Server returned " +
+                        error.status + " - " + error.statusText;
+                })
+        };
+
         function reloadData() {
             console.log($scope.activeChatUser);
             $http.get("/api/user").then(function(userResult) {
@@ -45,9 +59,13 @@
                         }
                     });
                     displayConversations();
+                    displayGroups();
                     if($scope.activeChatUser !== null && $scope.activeChatUser !== undefined) {
                         console.log("Updating the display message " + $scope.activeChatUser);
                         self.displayMessages($scope.activeChatUser);
+                    } else if($scope.activeChatGroup !== null && $scope.activeChatGroup !== undefined) {
+                        console.log("Updating the display message " + $scope.activeChatGroup);
+                        self.displayMessages($scope.activeChatGroup);
                     }
                 });
             }, function() {
@@ -68,6 +86,7 @@
                     }
                 });
                 displayConversations();
+                displayGroups();
             });
         }, function() {
             $http.get("/api/oauth/uri").then(function(result) {
@@ -93,6 +112,7 @@
                 };
             self.sendingMessage = angular.copy(user);
             self.isSendingMessage = true;
+            self.isSendingGroupMessage = false;
             $http.get("/api/user").then(function(userResult) {
                 console.log($scope.user._id);
                 console.log("Entering put field with " + placeholderMessage.seen);
@@ -112,6 +132,31 @@
             });
         };
 
+        self.displayGroupMessages = function(group) {
+            console.log("Sending message to " + group.id);
+            $scope.activeChatGroup = group;
+            self.getGroupUsers(group);
+            console.log("Active Chat Group " + $scope.activeChatGroup);
+            var messageTo = group.id;
+            var placeholderMessage = {
+                seen: true
+            };
+            self.sendingMessage = angular.copy(group);
+            self.isSendingGroupMessage = true;
+            self.isSendingMessage = false;
+            console.log($scope.user._id);
+            console.log("Entering put field with " + placeholderMessage.seen);
+            $http.put("/api/groups/conversations/" + messageTo, placeholderMessage).then(function(result) {
+                console.log("result of update");
+                console.log(result);
+            });
+            $http.get("/api/groups/conversations/" + messageTo).then(function(result) {
+                console.log("result");
+                console.log(result);
+                $scope.conversations = result.data;
+            });
+        };
+
         self.setSentMessage = function (user) {
             console.log("Sending message to " + user.id);
             self.sendingMessage = angular.copy(user);
@@ -119,6 +164,7 @@
         };
 
         self.sendMessage = function (user, message, isValid) {
+            console.log(user);
             if (isValid) {
                 self.loading = true;
                 message.sent = Math.floor(Date.now());
@@ -126,7 +172,11 @@
                 $http.post("/api/conversations/" + user.id, message)
                     .then(function(response) {
                         extract(response);
-                        $scope.conversations = self.displayMessages(user);
+                        if (!user.title) {
+                            $scope.conversations = self.displayMessages(user);
+                        } else {
+                            $scope.conversations = self.displayGroupMessages(user);
+                        }
                         self.resetForm();
                     })
                     .catch(function(error) {
@@ -136,21 +186,21 @@
             }
         };
 
-        self.displayGroups = function() {
-            $http.get("/api/groups")
-                .then(function(response) {
-                    $scope.groups = extract(response);
-                })
-                .catch(function(error) {
-                    self.error = "Failed to get groups. Server returned " +
-                            error.status + " - " + error.statusText;
-                })
-        };
+        //self.displayGroups = function() {
+        //    $http.get("/api/groups")
+        //        .then(function(response) {
+        //            $scope.groups = extract(response);
+        //        })
+        //        .catch(function(error) {
+        //            self.error = "Failed to get groups. Server returned " +
+        //                    error.status + " - " + error.statusText;
+        //        })
+        //};
 
-        self.displayGroupDetails = function() {
-            $http.get("/api/groups/" + "first-group")
+        self.displayGroupDetails = function(group) {
+            $http.get("/api/groups/" + group.id)
                 .then(function(response) {
-                    $scope.groups = extract(response);
+                    extract(response);
                 })
                 .catch(function(error) {
                     self.error = "Failed to get group. Server returned " +
@@ -166,6 +216,8 @@
                 $http.put("/api/groups/" + group.id, group)
                     .then(function(response) {
                         extract(response);
+                        $scope.showModal = false;
+                        reloadData();
                     })
                     .catch(function(error) {
                         self.error = "Failed to create group. Server returned " +
@@ -174,15 +226,16 @@
             }
         };
 
-        self.removeGroup = function() {
-            $http.delete("/api/groups/" + "first-group");
+        self.removeGroup = function(group) {
+            $http.delete("/api/groups/" + group.id);
         };
 
-        self.addUserToGroup = function() {
+        self.addUserToGroup = function(users) {
             console.log("Adding user to group");
             $http.put("/api/groups/" + "first-group" + "/users/" + "jackarnstein")
                 .then(function(response) {
                     extract(response);
+                    $scope.showAddUsersModal = false;
                 })
                 .catch(function(error) {
                     self.error = "Failed to create group. Server returned " +
@@ -190,10 +243,14 @@
                 });
         };
 
-        self.getGroupUsers = function() {
-            $http.get("/api/groups/" + "first-group" + "/users")
+        self.getGroupUsers = function(group) {
+            console.log("Get group details for: " + group.id);
+            console.log(group);
+            $http.get("/api/groups/" + group.id + "/users")
                 .then(function(response) {
-                    extract(response);
+                    $scope.groupsUsers = extract(response);
+                    console.log("Group members: ");
+                    console.log($scope.groupsUsers);
                 })
                 .catch(function(error) {
                     self.error = "Failed to get users of the group. Server returned " +
@@ -214,7 +271,16 @@
 
         $scope.toggleModal = function() {
             $scope.showModal = !$scope.showModal;
-            console.log($scope.showModal);
+        }
+
+        $scope.toggleShowAddUsersModal = function() {
+            $scope.showAddUsersModal = !$scope.showAddUsersModal;
+        }
+
+        self.addUserTemp = function(item) {
+            console.log("Adding to tempUser");
+            console.log(item);
+            $scope.tempUser.push(item);
         }
     });
     app.filter("searchFor", function() {
