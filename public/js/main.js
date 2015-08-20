@@ -4,6 +4,7 @@
     app.controller("ChatController", function($scope, $http, $interval) {
         var self = this;
         $scope.loggedIn = false;
+        $scope.showModal = false;
         $scope.activeChatUser = "";
         // REMOVE COMMENT TO POLL
         //$interval(reloadData, 2000);
@@ -157,18 +158,20 @@
                 })
         };
 
-        self.createGroup = function() {
-            var groupObject = new Object();
-            groupObject.title = "Test title";
-            console.log(groupObject);
-            $http.put("/api/groups/" + "first-group", groupObject)
-                .then(function(response) {
-                    extract(response);
-                })
-                .catch(function(error) {
-                    self.error = "Failed to create group. Server returned " +
-                            error.status + " - " + error.statusText;
-                });
+        self.createGroup = function(group, isValid) {
+            if (isValid) {
+                //var groupObject = new Object();
+                //groupObject.title = "Test title";
+                console.log(group);
+                $http.put("/api/groups/" + group.id, group)
+                    .then(function(response) {
+                        extract(response);
+                    })
+                    .catch(function(error) {
+                        self.error = "Failed to create group. Server returned " +
+                                error.status + " - " + error.statusText;
+                    });
+            }
         };
 
         self.removeGroup = function() {
@@ -208,6 +211,11 @@
                             error.status + " - " + error.statusText;
                 })
         };
+
+        $scope.toggleModal = function() {
+            $scope.showModal = !$scope.showModal;
+            console.log($scope.showModal);
+        }
     });
     app.filter("searchFor", function() {
         return function(arr, searchString) {
@@ -228,4 +236,47 @@
             return result;
         };
     });
+
+    app.directive("modal", function() {
+        return {
+            template: '<div class="modal fade">' +
+            '<div class="modal-dialog">' +
+            '<div class="modal-content">' +
+            '<div class="modal-header">' +
+            '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>' +
+            '<h4 class="modal-title">{{ title }}</h4>' +
+            '</div>' +
+            '<div class="modal-body" ng-transclude></div>' +
+            '</div>' +
+            '</div>' +
+            '</div>',
+            restrict: 'E',
+            transclude: true,
+            replace:true,
+            scope:true,
+            link: function postLink(scope, element, attrs) {
+                console.log(attrs.title);
+                scope.title = attrs.title;
+
+                scope.$watch(attrs.visible, function(value){
+                    if(value == true)
+                        $(element).modal('show');
+                    else
+                        $(element).modal('hide');
+                });
+
+                $(element).on('shown.bs.modal', function(){
+                    scope.$apply(function(){
+                        scope.$parent[attrs.visible] = true;
+                    });
+                });
+
+                $(element).on('hidden.bs.modal', function(){
+                    scope.$apply(function(){
+                        scope.$parent[attrs.visible] = false;
+                    });
+                });
+            }
+        };
+    })
 })();

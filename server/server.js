@@ -243,7 +243,10 @@ module.exports = function(port, db, githubAuthoriser) {
                 console.log("Found group: " + group);
                 if (group !== null) {
                     console.log("Editing group title");
-                    group.title = req.body.title;
+                    groups.update(
+                        { _id: groupId},
+                        { $set: {title: req.body.title}}
+                    );
                     res.sendStatus(200);
                 } else {
                     console.log("Inserting group");
@@ -273,6 +276,20 @@ module.exports = function(port, db, githubAuthoriser) {
                 //    console.log("FILTER");
                 //    console.log(group);
                 //});
+                docs = docs.filter(function(group) {
+                    var userExists = false;
+                    console.log(group);
+                    if (group.users) {
+                        for (var j = 0; j < group.users.length; j++) {
+                            if (group.users[j] === authenticatedUser) {
+                                userExists = true;
+                            }
+                        }
+                        if (userExists) {
+                            return group;
+                        }
+                    }
+                });
                 console.log("AFTER FILTER");
                 console.log(docs);
                 res.json(docs.map(function(group) {
