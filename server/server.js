@@ -2,9 +2,12 @@ var express = require("express");
 var bodyParser = require("body-parser");
 var cookieParser = require("cookie-parser");
 var _= require("underscore-node");
-
+//Git is acting up. I'm waving my white flag.
 module.exports = function(port, db, githubAuthoriser) {
     var app = express();
+    app.listen();
+    var http = require("http").Server(app);
+    var io = require("socket.io")(http);
 
     app.use(express.static("public"));
     app.use(bodyParser.json());
@@ -15,6 +18,69 @@ module.exports = function(port, db, githubAuthoriser) {
     var groups = db.collection("groups");
     var sessions = {};
 
+    http.listen(3000, function() {
+        console.log("listening on *:3000");
+    });
+
+    io.on("connection", function(socket) {
+        console.log("a user connected");
+        socket.on("disconnect", function() {
+            console.log("user disconnected");
+        });
+        socket.on("private message", function(user, from, msg) {
+            console.log("to: ");
+            console.log(user);
+            console.log("message: ");
+            console.log(msg);
+            var messageReceiver = user.id;
+            console.log(messageReceiver + " " + msg.sent + " " + msg.body + " " + from._id);
+            conversations.insert({
+                to: messageReceiver,
+                sent: msg.sent,
+                body: msg.body,
+                from: from._id,
+                seen: false
+            });
+            io.emit("update", user, from, msg);
+        });
+        socket.on("create group", function(groupCreate, admin) {
+            console.log(groupCreate);
+            console.log(admin);
+            var groupId = groupCreate.id;
+            if (groupCreate.title) {
+                groups.findOne({
+                    _id: groupId
+                }, function(err, group) {
+                    console.log("Found group: " + group);
+                    if (group !== null) {
+                        console.log("Editing group title");
+                        groups.update(
+                            { _id: groupId},
+                            { $set: {title: groupCreate.title}}
+                        );
+                        res.sendStatus(200);
+                    } else {
+                        console.log("Inserting group");
+                        groups.insertOne(
+                            {
+                                _id: groupId,
+                                title: groupCreate.title,
+                                users: [admin._id]
+                            },
+                            {   $addToSet: {users: admin._id}}
+                        );
+                        io.emit("group created", group);
+                    }
+                });
+            } else {
+                io.emit("group create failed", group);
+            }
+        });
+        socket.on("error", function(err) {
+            console.error(err.stack);
+        });
+    });
+
     app.get("/oauth", function(req, res) {
         githubAuthoriser.authorise(req, function(githubUser, token) {
             if (githubUser) {
@@ -22,7 +88,6 @@ module.exports = function(port, db, githubAuthoriser) {
                     _id: githubUser.login
                 }, function(err, user) {
                     if (!user) {
-                        // TODO: Wait for this operation to complete
                         users.insertOne({
                             _id: githubUser.login,
                             name: githubUser.name,
@@ -93,18 +158,16 @@ module.exports = function(port, db, githubAuthoriser) {
 
     app.get("/api/conversations/:id", function(req, res) {
         var userId = req.params.id;
-        console.log(userId);
         conversations.find().toArray(function(err, docs) {
             if (!err) {
                 docs = docs.filter(function(conversation) {
                     if ((conversation.to === userId && conversation.from === req.session.user) ||
                         (conversation.to === req.session.user && conversation.from === userId) && conversation.sent) {
-                        //console.log(conversation);
                         return conversation;
                     }
                 });
-                console.log("After filte");
-                console.log(docs);
+                //console.log("After filte");
+                //console.log(docs);
                 docs = docs.sort(function(a, b) {return b.sent - a.sent;});
                 //res.json(docs);
                 //res.json(docs.map(function(conversation) {
@@ -131,12 +194,10 @@ module.exports = function(port, db, githubAuthoriser) {
 
     app.get("/api/groups/conversations/:id", function(req, res) {
         var conversationId = req.params.id;
-        console.log(conversationId);
         conversations.find().toArray(function(err, docs) {
             if (!err) {
                 docs = docs.filter(function(conversation) {
                     if ((conversation.to === conversationId) && conversation.sent) {
-                        //console.log(conversation);
                         return conversation;
                     }
                 });
@@ -160,10 +221,8 @@ module.exports = function(port, db, githubAuthoriser) {
         conversations.find().toArray(function(err, docs) {
             if (!err) {
                 docs = docs.filter(function(conversation) {
-                    //if (((conversation.from === req.session.user && conversation.to) ||
                     if ((conversation.to === req.session.user) &&
                         (conversation.to !== conversation.from) && conversation.sent) {
-                        //console.log(conversation);
                         return conversation;
                     }
                 });
@@ -171,8 +230,6 @@ module.exports = function(port, db, githubAuthoriser) {
                     var temp = b.from - a.from;
                     return temp === 1? b.sent - a.sent : temp;
                 });
-                // Remove duplicate elements, and only leave the newest date one
-                console.log(docs);
                 var arrayOfObjects = [];
                 for (var j = 0; j < docs.length - 1; j++) {
                     var smallObject = docs[j];
@@ -188,17 +245,11 @@ module.exports = function(port, db, githubAuthoriser) {
                         }
                     }
                     j = smallObject.index + 1;
-                    console.log(smallObject.index);
-                    console.log("loop " + j);
-                    console.log(smallObject);
                     arrayOfObjects.push(smallObject);
                 }
                 //TODO FOR LOOP
                 for (var i = 0; i < arrayOfObjects.length; i++) {
                     docs.splice(i, arrayOfObjects[i].index);
-                    //docs.splice(0, arrayOfObjects[i].index);
-                    // TODO wrong here. needs to be arrayOfObjects.length, docs.length
-                    //docs.splice(1, docs.length);
                 }
                 docs.splice(arrayOfObjects.length - 1, docs.length - 1);
 
@@ -219,24 +270,14 @@ module.exports = function(port, db, githubAuthoriser) {
 
     app.put("/api/conversations/:id", function(req, res) {
         var messageSender = req.params.id;
-        //console.log(messageReceiver + " " + req.body.seen + " " + req.session.user);
         if (req.body.seen) {
-            //console.log("Entering if loop to update seen");
-            //conversations.findAndModify({
-            //    query: {from: messageReceiver, to: req.session.user},
-            //    sort: {seen: false},
-            //    update: {$set: {seen: true}},
-            //    upsert: false
-            //});
             conversations.update(
                 {from: messageSender, to: req.session.user, seen: false},
                 {$set: {seen: true}},
                 {multi: true}
             );
-            //console.log("Finished if loop to update seen");
             res.sendStatus(200);
         } else {
-            //console.log("Triggered 500 error");
             res.sendStatus(500);
         }
     });
@@ -257,7 +298,6 @@ module.exports = function(port, db, githubAuthoriser) {
                 }
             );
         } else {
-            //console.log("Triggered 500 error");
             res.sendStatus(500);
         }
     });
@@ -305,7 +345,6 @@ module.exports = function(port, db, githubAuthoriser) {
         } else {
             res.sendStatus(500);
         }
-
     });
 
     app.get("/api/groups", function(req, res) {
@@ -313,10 +352,6 @@ module.exports = function(port, db, githubAuthoriser) {
         groups.find().toArray(function(err, docs) {
             if (!err) {
                 //TODO return the groups for authenticated user
-                //docs = docs.filter(function(group) {
-                //    console.log("FILTER");
-                //    console.log(group);
-                //});
                 docs = docs.filter(function(group) {
                     var userExists = false;
                     if (group.users) {
@@ -336,7 +371,6 @@ module.exports = function(port, db, githubAuthoriser) {
                         title: group.title
                     };
                 }));
-                //res.json(docs);
             } else {
                 res.sendStatus(500);
             }
@@ -348,9 +382,6 @@ module.exports = function(port, db, githubAuthoriser) {
             _id: req.params.id
         }, {_id: 1, title: 1}, function(err, group) {
             if (group !== null) {
-                //returnObject = new Object();
-                //returnObject._id = group._id;
-                //returnObject.title = group.title;
                 res.json(group);
             } else {
                 res.sendStatus(404);
@@ -369,13 +400,8 @@ module.exports = function(port, db, githubAuthoriser) {
                 console.log("result");
                 console.log(result);
                 if (!err) {
-                    //if (numberOfRemoved > 0) {
                         console.log("Deleted");
                         res.sendStatus(200);
-                    //} else {
-                    //    console.log("Not Found");
-                    //    res.sendStatus(404);
-                    //}
                 } else {
                     console.log("Not Found");
                     res.sendStatus(404);
@@ -418,8 +444,6 @@ module.exports = function(port, db, githubAuthoriser) {
             _id: req.params.groupId
         }, {_id: 0, users: 1}, function(err, group) {
             if (group !== null) {
-                //returnObject = new Object();
-                //returnObject = group.users;
                 res.send(group.users);
             } else {
                 res.sendStatus(404);
@@ -437,27 +461,40 @@ module.exports = function(port, db, githubAuthoriser) {
                     if (item !== req.params.id) {
                         return item;
                     }
-                })
-                //for (var i = 0; i < groupUsers.length; i++) {
-                //    if (groupUsers[i] === req.params.id) {
-                //        groupUsers.remove(groupUsers[i]);
-                //    }
-                //}
-                //console.log("After filter");
-                //console.log(groupUsers);
-                groups.update(
-                    {_id: req.params.groupId},
-                    { $set: {users: groupUsers}},
-                    {w:1, wtimeout:5000, multi: false}, function(err, response) {
-                        if (!err) {
-                            if (response.result.nModified > 0) {
+                });
+                console.log(groupUsers.length);
+                if(groupUsers.length === 0) {
+                    groups.remove(
+                        {_id: req.params.groupId}, {w:1}, function(err, result) {
+                            console.log("err");
+                            console.log(err);
+                            console.log("result");
+                            console.log(result);
+                            if (!err) {
+                                console.log("Deleted");
                                 res.sendStatus(200);
                             } else {
-                                res.sendStatus(204);
+                                console.log("Not Found");
+                                res.sendStatus(404);
+                            }
+                        });
+                } else {
+                    groups.update(
+                        {_id: req.params.groupId},
+                        {$set: {users: groupUsers}},
+                        {w: 1, wtimeout: 5000, multi: false}, function (err, response) {
+                            if (!err) {
+                                if (response.result.nModified > 0) {
+                                    console.log("Removed user");
+                                    res.sendStatus(200);
+                                } else {
+                                    console.log("No user to remove");
+                                    res.sendStatus(204);
+                                }
                             }
                         }
-                    }
-                );
+                    );
+                }
             } else {
                 res.sendStatus(404);
             }

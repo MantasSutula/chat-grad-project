@@ -1,7 +1,7 @@
 (function() {
     var app = angular.module("ChatApp", []);
 
-    app.controller("ChatController", function($scope, $http, $interval) {
+    app.controller("ChatController", function($scope, $http, $rootScope) {
         var self = this;
         $scope.loggedIn = false;
         $scope.showModal = false;
@@ -10,8 +10,6 @@
         $scope.activeChatGroup = "";
         $scope.tempUser = [];
         $scope.groupUsers = [];
-        // REMOVE COMMENT TO POLL
-        //$interval(reloadData, 2000);
 
         self.resetForm = function() {
             self.loading = false;
@@ -22,14 +20,10 @@
 
         function extract(result) {
             console.log(result.data);
-            //if (result.status === 201) {
-            //    self.todos[self.todos.length - 1].id = result.data;
-            //}
             return result.data;
         }
 
         function displayConversations() {
-            //console.log("Starting display conversations method for " + $scope.user._id);
             $http.get("/api/conversations").then(function(result) {
                 console.log(result);
                 $scope.userConversations = result.data;
@@ -115,14 +109,6 @@
             });
         });
 
-        //self.displayConversations = function() {
-        //    console.log("Starting display conversations method for " + $scope.user._id);
-        //    $http.get("/api/conversations").then(function(result) {
-        //        console.log(result);
-        //        $scope.userConversations = result.data;
-        //    });
-        //};
-
         self.displayMessages = function(user) {
             $scope.activeChatUser = user;
             var messageTo = user.id;
@@ -181,39 +167,40 @@
             self.isSendingMessage = true;
         };
 
+        socket.on("update", function(user,from, msg) {
+            console.log("To:");
+            console.log(user);
+            console.log("From:");
+            console.log(from);
+            console.log("Received message: ");
+            console.log(msg);
+            if (from._id === $scope.user._id || user.id === $scope.user._id) {
+                $rootScope.$apply(function() {
+                    $scope.conversations.unshift(msg);
+                });
+            }
+        });
+
+        socket.on("group created", function(group) {
+            console.log("Group created!");
+            console.log(group);
+        });
+
+        socket.on("group create failed", function(group) {
+            console.log("Group failed to create.");
+            console.log(group);
+        });
+
         self.sendMessage = function (user, message, isValid) {
             console.log(user);
             if (isValid) {
                 self.loading = true;
                 message.sent = Math.floor(Date.now());
                 console.log(message);
-                $http.post("/api/conversations/" + user.id, message)
-                    .then(function(response) {
-                        extract(response);
-                        if (!user.title) {
-                            $scope.conversations = self.displayMessages(user);
-                        } else {
-                            $scope.conversations = self.displayGroupMessages(user);
-                        }
-                        self.resetForm();
-                    })
-                    .catch(function(error) {
-                        self.error = "Failed to create message. Server returned " +
-                            error.status + " - " + error.statusText;
-                    });
+                socket.emit("private message", user, $scope.user, message);
+                self.resetForm();
             }
         };
-
-        //self.displayGroups = function() {
-        //    $http.get("/api/groups")
-        //        .then(function(response) {
-        //            $scope.groups = extract(response);
-        //        })
-        //        .catch(function(error) {
-        //            self.error = "Failed to get groups. Server returned " +
-        //                    error.status + " - " + error.statusText;
-        //        })
-        //};
 
         self.displayGroupDetails = function(group) {
             $http.get("/api/groups/" + group.id)
@@ -228,30 +215,8 @@
 
         self.createGroup = function(group, isValid) {
             if (isValid) {
-                //var groupObject = new Object();
-                //groupObject.title = "Test title";
                 console.log(group);
-                $http.put("/api/groups/" + group.id, group)
-                    .then(function(response) {
-                        extract(response);
-                        $scope.tempUser.forEach(function(user) {
-                            $http.put("/api/groups/" + group.id + "/users/" + user.id)
-                                .then(function(response) {
-                                    extract(response);
-                                    $scope.showAddUsersModal = false;
-                                })
-                                .catch(function(error) {
-                                    self.error = "Failed to create group. Server returned " +
-                                        error.status + " - " + error.statusText;
-                                });
-                        });
-                        $scope.showModal = false;
-                        reloadData();
-                    })
-                    .catch(function(error) {
-                        self.error = "Failed to create group. Server returned " +
-                                error.status + " - " + error.statusText;
-                    });
+                socket.emit("create group", group, $scope.user);
             }
         };
 
@@ -293,7 +258,7 @@
                             error.status + " - " + error.statusText;
                 })
         }
-        //TODO if noone is left in group - delete the GROUP
+
         self.removeGroupUser = function(group, groupUser) {
             console.log(group);
             console.log(groupUser);
@@ -332,18 +297,18 @@
 
         $scope.toggleModal = function() {
             $scope.showModal = !$scope.showModal;
-        }
+        };
 
         $scope.toggleShowAddUsersModal = function() {
             $scope.showAddUsersModal = !$scope.showAddUsersModal;
-        }
+        };
 
         self.addUserTemp = function(item) {
             console.log("Adding to tempUser");
             console.log(item);
             updateRemoveUsers(item);
             $scope.tempUser.push(item);
-        }
+        };
 
         self.removeUserTemp = function(item) {
             console.log("Removing from tempUser");
@@ -367,7 +332,6 @@
             searchString = searchString.toLowerCase();
 
             angular.forEach(arr, function(item) {
-                //console.log(item); NEED TO CHANGE TO NAME, NOT ID.lowercase
                 if (item.id.toLowerCase().indexOf(searchString) !== -1) {
                     result.push(item);
                 }
