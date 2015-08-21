@@ -8,6 +8,7 @@ module.exports = function(port, db, githubAuthoriser) {
     app.listen();
     var http = require("http").Server(app);
     var io = require("socket.io")(http);
+    //TODO create an array of users, so I can emit to specific ones
 
     app.use(express.static("public"));
     app.use(bodyParser.json());
